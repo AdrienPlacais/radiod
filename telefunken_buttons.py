@@ -65,11 +65,11 @@ if __name__ == "__main__":
     print("Test TelefunkenButtons class")
 
     # Get switch configuration
-    off_switch = config.getSwitchGpio("off")
-    fip_switch = config.getSwitchGpio("fip")
-    spotify_switch = config.getSwitchGpio("spotify")
-    unused_switch = config.getSwitchGpio("unused")
-    disco_switch = config.getSwitchGpio("disco")
+    off_switch = config.getSwitchGpio("off_switch")
+    fip_switch = config.getSwitchGpio("fip_switch")
+    spotify_switch = config.getSwitchGpio("spotify_switch")
+    unused_switch = config.getSwitchGpio("unused_switch")
+    disco_switch = config.getSwitchGpio("disco_switch")
 
     print(f"off_switch GPIO: {off_switch}")
     print(f"fip_switch GPIO: {fip_switch}")
