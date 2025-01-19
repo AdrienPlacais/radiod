@@ -6,7 +6,7 @@ import time
 from collections.abc import Sequence
 
 import RPi.GPIO as GPIO
-from button_class import Button, interrupt
+from switch import Switch
 
 
 class TeleButtons:
@@ -21,32 +21,32 @@ class TeleButtons:
 
     """
 
-    def __init__(self, buttons: Sequence[Button]) -> None:
+    def __init__(self, buttons: Sequence[Switch]) -> None:
         """Create object from several buttons."""
         self.buttons = buttons
 
     @property
-    def off(self) -> Button:
+    def off(self) -> Switch:
         """Give the leftmost button."""
         return self.buttons[0]
 
     @property
-    def fip(self) -> Button:
+    def fip(self) -> Switch:
         """Give the 2nd button, starting from left."""
         return self.buttons[1]
 
     @property
-    def spotify(self) -> Button:
+    def spotify(self) -> Switch:
         """Give the 3rd button, starting from left."""
         return self.buttons[2]
 
     @property
-    def unused(self) -> Button:
+    def unused(self) -> Switch:
         """Give the 4th button, starting from left."""
         return self.buttons[3]
 
     @property
-    def disco(self) -> Button:
+    def disco(self) -> Switch:
         """Give the last button."""
         return self.buttons[4]
 
@@ -65,30 +65,34 @@ if __name__ == "__main__":
     print("Test TelefunkenButtons class")
 
     # Get switch configuration
-    off_switch = config.getSwitchGpio("off_switch")
-    fip_switch = config.getSwitchGpio("fip_switch")
-    spotify_switch = config.getSwitchGpio("spotify_switch")
-    unused_switch = config.getSwitchGpio("unused_switch")
-    disco_switch = config.getSwitchGpio("disco_switch")
+    off_gpio = config.getSwitchGpio("off_switch")
+    fip_gpio = config.getSwitchGpio("fip_switch")
+    spotify_gpio = config.getSwitchGpio("spotify_switch")
+    unused_gpio = config.getSwitchGpio("unused_switch")
+    disco_gpio = config.getSwitchGpio("disco_switch")
 
-    print(f"off_switch GPIO: {off_switch}")
-    print(f"fip_switch GPIO: {fip_switch}")
-    print(f"spotify_switch GPIO: {spotify_switch}")
-    print(f"unused_switch GPIO: {unused_switch}")
-    print(f"disco_switch GPIO: {disco_switch}")
+    print(f"off_switch GPIO: {off_gpio}")
+    print(f"fip_switch GPIO: {fip_gpio}")
+    print(f"spotify_switch GPIO: {spotify_gpio}")
+    print(f"unused_switch GPIO: {unused_gpio}")
+    print(f"disco_switch GPIO: {disco_gpio}")
 
     kwargs = {
-        "callback": interrupt,
         "log": log,
         "pull_up_down": config.pull_up_down,
         "bouncetime": 1000,
+        "callback": None,
     }
-    for switch in (off_switch, fip_switch, spotify_switch, unused_switch, disco_switch):
-        _ = Button(switch, **kwargs)
+    for gpio, name in zip(
+        (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
+        ("OFF", "FIP", "SPOTIFY", "UNUSED", "DISCO"),
+        strict=True,
+    ):
+        _ = Switch(button=gpio, name=name, **kwargs)
 
     try:
         while True:
-            time.sleep(0.2)
+            time.sleep(1.0)
 
     except KeyboardInterrupt:
         print(" Stopped")
