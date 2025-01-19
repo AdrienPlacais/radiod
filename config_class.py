@@ -1117,7 +1117,7 @@ class Configuration:
             msg = "Invalid switch label " + label
             log.message(msg, log.ERROR)
 
-    def getSwitchGpio(self, switch_label):
+    def getSwitchGpio(self, switch_label) -> int:
         self.switch_gpio = switch_label
         return self.switch_gpio
 
