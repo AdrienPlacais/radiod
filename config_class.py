@@ -84,7 +84,7 @@ class Configuration:
     COSMIC_CONTROLLER = 3  # IQAudio cosmic controller
     PIFACE_BUTTONS = 4  # PiFace CAD buttons
     ADAFRUIT_RGB = 5  # Adafruit RGB I2C 5 button interface
-    TELEFUNKEN = 6  # my config
+    TELEFUNKEN = 5  # my config
     _user_interface = TELEFUNKEN
 
     UserInterfaces = [
@@ -1162,11 +1162,11 @@ class Configuration:
 
     # User interface (Buttons or Rotary encoders or uther)
     @property
-    def user_interface(self):
+    def user_interface(self) -> int:
         return self._user_interface
 
     @user_interface.setter
-    def user_interface(self, parameter):
+    def user_interface(self, parameter: str):
         if parameter == "rotary_encoder":
             self._user_interface = self.ROTARY_ENCODER
         elif parameter == "graphical":

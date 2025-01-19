@@ -17,6 +17,8 @@
 #         The authors shall not be liable for any loss or damage however caused.
 #
 
+from telefunken_buttons import TeleButtons
+from switch import Switch
 import datetime
 import os
 import pdb
@@ -2623,7 +2625,51 @@ class Radio:
             self.event.set(self.event.PLAYLIST_CHANGED)
             print("event.PLAYLIST_CHANGED sent!")
 
-
+    # def setupTelefunkenButtons(self):
+    #     """
+    #     Configure Telefunken buttons if the user interface is TELEFUNKEN.
+    #     """
+    #     if self.config.user_interface != "TELEFUNKEN":
+    #         return
+    # 
+    #     log.message("Setting up Telefunken buttons", log.INFO)
+    # 
+    #     # Define GPIOs for Telefunken buttons
+    #     off_gpio = self.config.getSwitchGpio("off_switch")
+    #     fip_gpio = self.config.getSwitchGpio("fip_switch")
+    #     spotify_gpio = self.config.getSwitchGpio("spotify_switch")
+    #     unused_gpio = self.config.getSwitchGpio("unused_switch")
+    #     disco_gpio = self.config.getSwitchGpio("disco_switch")
+    # 
+    #     # Create Switch objects with appropriate callbacks
+    #     buttons = [
+    #         Switch(off_gpio, self.handleOffButton, log, self.config.pull_up_down),
+    #         Switch(fip_gpio, self.handleFipButton, log, self.config.pull_up_down),
+    #         Switch(spotify_gpio, None, log, self.config.pull_up_down),  # Add callback if needed
+    #         Switch(unused_gpio, None, log, self.config.pull_up_down),   # Add callback if needed
+    #         Switch(disco_gpio, None, log, self.config.pull_up_down),    # Add callback if needed
+    #     ]
+    # 
+    #     # Create Telefunken button set
+    #     self.tele_buttons = TeleButtons(buttons)
+    # 
+    # def handleOffButton(self, gpio, state):
+    #     """
+    #     Handle the OFF button press to shut down the radio.
+    #     """
+    #     if state:  # Only act on button press (not release)
+    #         log.message("OFF button pressed - shutting down the radio", log.INFO)
+    #         self.shutdown()
+    # 
+    # def handleFipButton(self, gpio, state):
+    #     """
+    #     Handle the FIP button press to launch the radio.
+    #     """
+    #     if state:  # Only act on button press (not release)
+    #         log.message("FIP button pressed - launching radio", log.INFO)
+    #         self.startMpdSocket()  # Restart the MPD socket if needed
+    #         self.play(self.current_id)  # Play the current ID or start playback
+    
 # End of Radio Class
 
 # set tabstop=4 shiftwidth=4 expandtab
