@@ -26,7 +26,9 @@ GPIO.setmode(GPIO.BCM)
 
 class Button:
 
-    def __init__(self, button, callback, log, pull_up_down=GPIO.PUD_DOWN):
+    def __init__(
+        self, button, callback, log, pull_up_down=GPIO.PUD_DOWN, bouncetime: int = 200
+    ):
         t = threading.Thread(
             target=self._run,
             args=(
@@ -38,6 +40,7 @@ class Button:
         )
         t.daemon = True
         t.start()
+        self._bouncetime = bouncetime
 
     def _run(self, button, callback, log, pull_up_down):
         self.button = button
@@ -70,7 +73,10 @@ class Button:
 
                 # Add event detection to the GPIO inputs
                 GPIO.add_event_detect(
-                    self.button, edge, callback=self.button_event, bouncetime=200
+                    self.button,
+                    edge,
+                    callback=self.button_event,
+                    bouncetime=self._bouncetime,
                 )
             except Exception as e:
                 log.message(
