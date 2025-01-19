@@ -12,23 +12,34 @@
 #
 #
 
-import os,sys
-import time
-import RPi.GPIO as GPIO
-import threading
+import os
 import pdb
+import sys
+import threading
+import time
+
+import RPi.GPIO as GPIO
 from constants import *
 
 GPIO.setmode(GPIO.BCM)
 
+
 class Button:
 
-    def __init__(self,button,callback,log,pull_up_down=GPIO.PUD_DOWN):
-        t = threading.Thread(target=self._run,args=(button,callback,log,pull_up_down,))
+    def __init__(self, button, callback, log, pull_up_down=GPIO.PUD_DOWN):
+        t = threading.Thread(
+            target=self._run,
+            args=(
+                button,
+                callback,
+                log,
+                pull_up_down,
+            ),
+        )
         t.daemon = True
         t.start()
 
-    def _run(self,button,callback,log,pull_up_down):
+    def _run(self, button, callback, log, pull_up_down):
         self.button = button
         self.callback = callback
         self.pull_up_down = pull_up_down
@@ -40,33 +51,39 @@ class Button:
             if pull_up_down == DOWN:
                 resistor = GPIO.PUD_DOWN
                 edge = GPIO.RISING
-                sEdge = 'Rising'
+                sEdge = "Rising"
             else:
                 resistor = GPIO.PUD_UP
                 edge = GPIO.FALLING
-                sEdge = 'Falling'
+                sEdge = "Falling"
 
             try:
-                msg = "Creating button object for GPIO " +  str(self.button) \
-                     + " edge=" +  sEdge
+                msg = (
+                    "Creating button object for GPIO "
+                    + str(self.button)
+                    + " edge="
+                    + sEdge
+                )
                 log.message(msg, log.DEBUG)
                 # The following lines enable the internal pull-up resistor
                 GPIO.setup(self.button, GPIO.IN, pull_up_down=resistor)
 
                 # Add event detection to the GPIO inputs
-                GPIO.add_event_detect(self.button, edge, 
-                            callback=self.button_event,
-                            bouncetime=200)
+                GPIO.add_event_detect(
+                    self.button, edge, callback=self.button_event, bouncetime=200
+                )
             except Exception as e:
-                log.message("Button GPIO " + str(self.button)\
-                         + " initialise error: " + str(e), log.ERROR)
+                log.message(
+                    "Button GPIO " + str(self.button) + " initialise error: " + str(e),
+                    log.ERROR,
+                )
                 sys.exit(1)
-         
+
     # Push button event
-    def button_event(self,button):
+    def button_event(self, button):
         self.log.message("Push button event GPIO " + str(button), self.log.DEBUG)
         event_button = self.button
-        self.callback(event_button) # Pass button event to event class
+        self.callback(event_button)  # Pass button event to event class
         return
 
     # Was a button pressed (goes from 0 to 1 or 1 to 0 depending upon pull_up_down )
@@ -81,24 +98,28 @@ class Button:
             pressed = False
         return pressed
 
+
 # End of Button Class
 
 ### Test routine ###
+
 
 def interrupt(gpio):
     print("Button pressed on GPIO", gpio)
     return
 
+
 if __name__ == "__main__":
 
     from config_class import Configuration
     from log_class import Log
+
     config = Configuration()
     log = Log()
     if len(log.getName()) < 1:
         log.init("radio")
 
-    pullupdown = ['DOWN','UP'] 
+    pullupdown = ["DOWN", "UP"]
 
     print("Test Button Class")
 
@@ -147,4 +168,3 @@ if __name__ == "__main__":
 
 # set tabstop=4 shiftwidth=4 expandtab
 # retab
-
