@@ -1,0 +1,7 @@
+
+/usr/share/radio/set_mixer_id.sh Sat Jan 18 20:43:46 CET 2025
+Card 1 "DAC+"
+Using Digital Playback Volume
+mixer_volume_id=1
+Mixer numid 1 written to /var/lib/radiod/mixer_volume_id
+Boot configuration in /boot/firmware/config.txt
