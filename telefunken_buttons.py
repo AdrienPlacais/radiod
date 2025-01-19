@@ -77,11 +77,14 @@ if __name__ == "__main__":
     print(f"unused_switch GPIO: {unused_switch}")
     print(f"disco_switch GPIO: {disco_switch}")
 
-    Button(off_switch, interrupt, log, config.pull_up_down)
-    Button(fip_switch, interrupt, log, config.pull_up_down)
-    Button(spotify_switch, interrupt, log, config.pull_up_down)
-    Button(unused_switch, interrupt, log, config.pull_up_down)
-    Button(disco_switch, interrupt, log, config.pull_up_down)
+    kwargs = {
+        "callback": interrupt,
+        "log": log,
+        "pull_up_down": config.pull_up_down,
+        "bouncetime": 1000,
+    }
+    for switch in (off_switch, fip_switch, spotify_switch, unused_switch, disco_switch):
+        _ = Button(switch, **kwargs)
 
     try:
         while True:
