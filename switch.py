@@ -28,48 +28,35 @@ class Switch(Button):
         self,
         gpio: int,
         log: Log,
-        pull_up_down: Literal[0, 1] = 0,
+        pull_up_down: Literal["UP", "DOWN"] = "UP",
         callback: Callable | None = None,
         stable_time: float = 0.05,
         name: str = "",
         invert_logic: bool = True,
     ) -> None:
-        """Initialize the Switch object.
-
-        Parameters
-        ----------
-        gpio : int
-            The GPIO pin number associated with the switch.
-        log : Log
-            The logging object used to record events.
-        pull_up_down : int, optional
-            Specifies whether to use a pull-up or pull-down resistor. The
-            default is 0.
-        callback : Callable | None, optional
-            A function to call when the switch is pressed. The function will
-            receive two arguments: the GPIO pin number and the new state (bool).
-            If None, we set a default function that simply prints some info.
-        stable_time : float, optional
-            Minimum time (in seconds) the state must remain stable before
-            confirming the change. Default is 0.05 seconds (50 ms).
-        name : str, optional
-            Name of the switch.
-        invert_logic : bool, optional
-            If ON and OFF should be inverted.
-
-        """
+        """Initialize the Switch object."""
         self._name = name
         if callback is None:
             callback = self._debug_callback
-        super().__init__(
-            button=gpio, callback=callback, log=log, pull_up_down=pull_up_down
-        )
+        self.gpio = gpio
+        self.callback = callback
+        self.log = log
+        self.pull_up_down = pull_up_down
+        self.stable_time = stable_time
+        self.invert_logic = invert_logic
 
         raw_state: bool = GPIO.input(gpio)
         self.state: bool = not raw_state if invert_logic else raw_state
-        self.stable_time: float = stable_time
         self.last_state_time: float = time.time()
-        self.invert_logic: bool = invert_logic
+
+        # Configure GPIO
+        GPIO.setup(
+            gpio,
+            GPIO.IN,
+            pull_up_down=GPIO.PUD_DOWN if pull_up_down == "DOWN" else GPIO.PUD_UP,
+        )
+        edge = GPIO.RISING if pull_up_down == "DOWN" else GPIO.FALLING
+        GPIO.add_event_detect(gpio, edge, callback=self.button_event, bouncetime=200)
 
         state_str = "ON" if self.state else "OFF"
         self.log.message(
@@ -90,6 +77,7 @@ class Switch(Button):
             The GPIO pin number where the event occurred.
 
         """
+        print("button event")
         raw_state = GPIO.input(button)
         current_state = not raw_state if self.invert_logic else raw_state
         current_time = time.time()
@@ -131,6 +119,10 @@ class Switch(Button):
             f"[DEBUG] Switch {self._name} on GPIO {self.button} changed state to {state_str}"
         )
 
+    def pressed(self) -> bool:
+        print("pressed")
+        return super().pressed()
+
 
 if __name__ == "__main__":
     from config_class import Configuration
@@ -156,10 +148,7 @@ if __name__ == "__main__":
     print(f"unused_switch GPIO: {unused_gpio}")
     print(f"disco_switch GPIO: {disco_gpio}")
 
-    pull_up_down_strings = ["DOWN", "UP"]
-    pull_up_down = config.pull_up_down
-    assert pull_up_down in (0, 1)
-    print(f"Pull Up/Down resistors: {pull_up_down_strings[pull_up_down]}")
+    print(f"Pull Up/Down resistors: {config.pull_up_down}")
 
     for gpio, name in zip(
         (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
@@ -167,7 +156,11 @@ if __name__ == "__main__":
         strict=True,
     ):
         _ = Switch(
-            gpio=gpio, log=log, callback=None, pull_up_down=pull_up_down, name=name
+            gpio=gpio,
+            log=log,
+            callback=None,
+            pull_up_down=config.pull_up_down,
+            name=name,
         )
 
     try:

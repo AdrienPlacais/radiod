@@ -32,7 +32,7 @@ volumeknob = None
 tunerknob = None
 rotary_switch = None
 
-# Buttons
+# Button objects
 left_button = None
 right_button = None
 mute_button = None
@@ -43,11 +43,12 @@ aux_button1 = None
 aux_button2 = None
 aux_button3 = None
 
-off_gpio = None
-fip_gpio = None
-spotify_gpio = None
-unused_gpio = None
-disco_switch = None
+# Switch objects
+off_button = None
+fip_button = None
+spotify_button = None
+unused_button = None
+disco_button = None
 
 
 # If no interrupt required
@@ -170,11 +171,12 @@ class Event:
     aux_switch2 = 0
     aux_switch3 = 0
 
-    off_gpio = 27
-    fip_gpio = 22
-    spotify_gpio = 17
-    unused_gpio = 18
-    disco_gpio = 5
+    # GPIO numbers at initialization
+    off_switch = 27
+    fip_switch = 22
+    spotify_switch = 17
+    unused_switch = 18
+    disco_switch = 5
 
     rotary_switch_value = 0
 
@@ -193,11 +195,11 @@ class Event:
         self.setupRotarySwitch()
 
         self._telefunken_events_types = {
-            self.off_gpio: self.OFF,
-            self.fip_gpio: self.FIP,
-            self.spotify_gpio: self.SPOTIFY,
-            self.unused_gpio: self.UNUSED,
-            self.disco_gpio: self.DISCO,
+            self.off_switch: self.OFF,
+            self.fip_switch: self.FIP,
+            self.spotify_switch: self.SPOTIFY,
+            self.unused_switch: self.UNUSED,
+            self.disco_switch: self.DISCO,
         }
         return
 
@@ -441,11 +443,11 @@ class Event:
         self.aux_switch2 = self.config.getSwitchGpio("aux_switch2")
         self.aux_switch3 = self.config.getSwitchGpio("aux_switch3")
 
-        self.off_gpio = self.config.getSwitchGpio("off_switch")
-        self.fip_gpio = self.config.getSwitchGpio("fip_switch")
-        self.spotify_gpio = self.config.getSwitchGpio("spotify_switch")
-        self.unused_gpio = self.config.getSwitchGpio("unused_switch")
-        self.disco_gpio = self.config.getSwitchGpio("disco_switch")
+        self.off_switch = self.config.getSwitchGpio("off_switch")
+        self.fip_switch = self.config.getSwitchGpio("fip_switch")
+        self.spotify_switch = self.config.getSwitchGpio("spotify_switch")
+        self.unused_switch = self.config.getSwitchGpio("unused_switch")
+        self.disco_switch = self.config.getSwitchGpio("disco_switch")
         return
 
     # Configure rotary switch (not rotary encoders!)
@@ -659,59 +661,6 @@ class Event:
             pressed = tunerknob.buttonPressed(self.menu_switch)
         return pressed
 
-    def off_switch_on(self) -> bool:
-        """Set the method called when Telefunken OFF switch is on."""
-        print("OFF")
-        global off_gpio
-        on = False
-        if off_gpio != None:
-            on = off_gpio.get_state()
-            if on:
-                self.set(self.OFF)
-        return on
-
-    def fip_switch_on(self) -> bool:
-        """Set the method called when Telefunken FIP switch is on."""
-        print("FIP")
-        global fip_gpio
-        on = False
-        if fip_gpio != None:
-            on = fip_gpio.get_state()
-            if on:
-                self.set(self.FIP)
-        return on
-
-    def spotify_switch_on(self) -> bool:
-        """Set the method called when Telefunken SPOTIFY switch is on."""
-        print("SPOTIFY")
-        global spotify_gpio
-        on = False
-        if spotify_gpio != None:
-            on = spotify_gpio.get_state()
-            if on:
-                self.set(self.SPOTIFY)
-        return on
-
-    def unused_switch_on(self) -> bool:
-        """Set the method called when Telefunken UNUSED switch is on."""
-        global unused_gpio
-        on = False
-        if unused_gpio != None:
-            on = unused_gpio.get_state()
-            if on:
-                self.set(self.UNUSED)
-        return on
-
-    def disco_switch_on(self) -> bool:
-        """Set the method called when Telefunken DISCO switch is on."""
-        global disco_switch
-        on = False
-        if disco_switch != None:
-            on = disco_switch.get_state()
-            if on:
-                self.set(self.DISCO)
-        return on
-
     def switch_event(self, event_gpio: int, new_state: bool) -> None:
         """Define events for Telefunken buttons.
 
@@ -725,8 +674,8 @@ class Event:
             corresponding to the ``new_state=True``.
 
         """
-        global off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_switch
         print(f"{event_gpio = }, {new_state = }")
+        global off_button, fip_button, spotify_button, unused_button, disco_button
 
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
         print(f"Telefunken button event: {event_gpio} is {new_state}")
@@ -745,39 +694,45 @@ class Event:
         self.event_type = self._telefunken_events_types[event_gpio]
 
     def set_telefunken_interface(self) -> None:
-        """Create the switches for Telefunken."""
+        """Create the switches for Telefunken, as well as rotary encoders.
+
+        .. warning::
+            ``_button`` objects are :class:`.Switch.`
+            ``_switch`` objects are int (GPIO number).
+
+        """
         self.setRotaryInterface()
-        global telefunken_switches, off_switch, fip_switch, spotify_switch, unused_switch, disco_switch
+        global off_button, fip_button, spotify_button, unused_button, disco_button
 
         up_down = self.config.pull_up_down if self.config is not None else 1
         log.message(f"event.setTelefunkenInterface {up_down = }", log.DEBUG)
 
-        off_switch = Switch(
-            gpio=self.off_gpio,
+        off_button = Switch(
+            gpio=self.off_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
         )
-        fip_switch = Switch(
-            gpio=self.fip_gpio,
+        fip_button = Switch(
+            gpio=self.fip_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
         )
-        spotify_switch = Switch(
-            gpio=self.spotify_gpio,
+        spotify_button = Switch(
+            gpio=self.spotify_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
         )
-        unused_switch = Switch(
-            gpio=self.unused_gpio,
+        unused_button = Switch(
+            gpio=self.unused_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-        )
-        disco_switch = Switch(
-            gpio=self.disco_gpio,
+            )
+        disco_button = Switch(
+            gpio=self.disco_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,

@@ -54,18 +54,22 @@ class Button:
         self.pull_up_down = pull_up_down
         self.log = log
 
+        print(f"called_run with {button = } {callback = } {log = } {pull_up_down = }")
+
         if self.button <= 0:
             return
         GPIO.setwarnings(False)
 
-        if pull_up_down == DOWN:
+        if pull_up_down in ("DOWN", "down", 0):
             resistor = GPIO.PUD_DOWN
             edge = GPIO.RISING
             sEdge = "Rising"
-        else:
+        elif pull_up_down in ("UP", "up", 1):
             resistor = GPIO.PUD_UP
             edge = GPIO.FALLING
             sEdge = "Falling"
+        else:
+            log.message(f"{pull_up_down = } is invalid.", log.ERROR)
 
         try:
             msg = f"Creating button object for GPIO {self.button} {sEdge = }"
