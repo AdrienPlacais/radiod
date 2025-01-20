@@ -17,9 +17,6 @@
 #            The authors shall not be liable for any loss or damage however caused.
 #
 
-import os
-import pdb
-import pwd
 import sys
 import time
 
@@ -195,7 +192,7 @@ class Event:
         self.setInterface()
         self.setupRotarySwitch()
 
-        self.telefunken_events_types = {
+        self._telefunken_events_types = {
             self.off_gpio: self.OFF,
             self.fip_gpio: self.FIP,
             self.spotify_gpio: self.SPOTIFY,
@@ -471,6 +468,7 @@ class Event:
 
         if self.user_interface == self.config.ROTARY_ENCODER:
             self.setRotaryInterface()
+            self.set_telefunken_interface()
 
         # The Adafruit and Piface CAD interfaces use I2C and SPI respectively
         elif (
@@ -663,6 +661,7 @@ class Event:
 
     def off_switch_on(self) -> bool:
         """Set the method called when Telefunken OFF switch is on."""
+        print("OFF")
         global off_gpio
         on = False
         if off_gpio != None:
@@ -673,6 +672,7 @@ class Event:
 
     def fip_switch_on(self) -> bool:
         """Set the method called when Telefunken FIP switch is on."""
+        print("FIP")
         global fip_gpio
         on = False
         if fip_gpio != None:
@@ -683,6 +683,7 @@ class Event:
 
     def spotify_switch_on(self) -> bool:
         """Set the method called when Telefunken SPOTIFY switch is on."""
+        print("SPOTIFY")
         global spotify_gpio
         on = False
         if spotify_gpio != None:
@@ -725,34 +726,62 @@ class Event:
 
         """
         global off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_switch
+        print(f"{event_gpio = }, {new_state = }")
 
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
+        print(f"Telefunken button event: {event_gpio} is {new_state}")
         self.event_triggered = True
 
         if not new_state:
+            print(f"\t{event_gpio = }, return")
             return
 
-        if event_gpio not in self.telefunken_events_types:
+        if event_gpio not in self._telefunken_events_types:
+            print(f"\t{event_gpio = }, not telef")
             self.event_triggered = False
             return
 
         # Convert Switch to standard event
-        self.event_type = self.telefunken_events_types[event_gpio]
+        self.event_type = self._telefunken_events_types[event_gpio]
 
     def set_telefunken_interface(self) -> None:
         """Create the switches for Telefunken."""
         self.setRotaryInterface()
         global telefunken_switches, off_switch, fip_switch, spotify_switch, unused_switch, disco_switch
 
-        up_down = self.config.pull_up_down if self.config is not None else "UP"
+        up_down = self.config.pull_up_down if self.config is not None else 1
         log.message(f"event.setTelefunkenInterface {up_down = }", log.DEBUG)
-        kwargs = {"callback": self.switch_event, "pull_up_down": up_down, "log": log}
 
-        off_switch = Switch(button=self.off_gpio, **kwargs)
-        fip_switch = Switch(button=self.fip_gpio, **kwargs)
-        spotify_switch = Switch(button=self.spotify_gpio, **kwargs)
-        unused_switch = Switch(button=self.unused_gpio, **kwargs)
-        disco_switch = Switch(button=self.disco_gpio, **kwargs)
+        off_switch = Switch(
+            gpio=self.off_gpio,
+            callback=self.switch_event,
+            pull_up_down=up_down,
+            log=log,
+        )
+        fip_switch = Switch(
+            gpio=self.fip_gpio,
+            callback=self.switch_event,
+            pull_up_down=up_down,
+            log=log,
+        )
+        spotify_switch = Switch(
+            gpio=self.spotify_gpio,
+            callback=self.switch_event,
+            pull_up_down=up_down,
+            log=log,
+        )
+        unused_switch = Switch(
+            gpio=self.unused_gpio,
+            callback=self.switch_event,
+            pull_up_down=up_down,
+            log=log,
+        )
+        disco_switch = Switch(
+            gpio=self.disco_gpio,
+            callback=self.switch_event,
+            pull_up_down=up_down,
+            log=log,
+        )
         return
 
 
