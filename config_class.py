@@ -17,6 +17,7 @@ import configparser
 import os
 import pdb
 import sys
+from typing import Literal
 
 import RPi.GPIO as GPIO
 from constants import *
@@ -792,11 +793,10 @@ class Configuration:
         return
 
     # Convert yes/no to True/False
-    def convertYesNo(self, parameter):
-        true_false = False
+    def convertYesNo(self, parameter: Literal["yes", "no"]) -> bool:
         if parameter == "yes":
-            true_false = True
-        return true_false
+            return True
+        return False
 
     # Convert On/Off to True/False
     def convertOnOff(self, parameter):
