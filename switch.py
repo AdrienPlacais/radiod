@@ -30,7 +30,7 @@ class Switch(Button):
         callback: Callable | None = None,
         name: str = "",
         invert_logic: bool = True,
-        press_duration: float = 0.5,  # Minimum press duration to trigger action
+        press_duration: float = 0.1,
     ) -> None:
         """
         Initialize the Switch object.
@@ -52,7 +52,8 @@ class Switch(Button):
         invert_logic : bool, optional
             If True, inverts the ON/OFF logic. Default is True.
         press_duration : float, optional
-            Minimum time the button must be pressed to trigger the action.
+            Minimum time the button must be pressed to trigger the action in
+            seconds.
 
         """
         if callback is None:
