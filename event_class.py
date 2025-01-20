@@ -110,7 +110,7 @@ class Event:
 
     # Telefunken
     OFF = SHUTDOWN
-    FIP = 27
+    FIP = LOAD_RADIO
     SPOTIFY = LOAD_SPOTIFY
     UNUSED = 29
     DISCO = 30
