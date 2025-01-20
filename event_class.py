@@ -674,19 +674,15 @@ class Event:
             corresponding to the ``new_state=True``.
 
         """
-        print(f"{event_gpio = }, {new_state = }")
         global off_button, fip_button, spotify_button, unused_button, disco_button
 
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
-        print(f"Telefunken button event: {event_gpio} is {new_state}")
         self.event_triggered = True
 
         if not new_state:
-            print(f"\t{event_gpio = }, return")
             return
 
         if event_gpio not in self._telefunken_events_types:
-            print(f"\t{event_gpio = }, not telef")
             self.event_triggered = False
             return
 
@@ -759,7 +755,6 @@ if __name__ == "__main__":
                 name = event.eventNames[int(type)]
                 print("Event %d %s" % (type, name))
                 event.clear()
-                print("========================================")
             else:
                 time.sleep(0.01)
 
