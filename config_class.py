@@ -314,83 +314,8 @@ class Configuration:
 
         return
 
-    def getConfig(self):
-        sections = ["RADIOD", "AIRPLAY", "SCREEN"]
-        assert isinstance(config, Configuration)
-        for section in sections:
-            try:
-                config.read("ConfigFile")
-                if not config.has_section(section):
-                    print(f"No section: {section}")
-                    continue
-
-                options = config.options(section)
-                for option in options:
-                    option = option.lower()
-                    parameter = config.get(section, option)
-                    self.configOptions[option] = parameter
-
-                    dispatch_table = {
-                        "loglevel": lambda: None,  # No-op
-                        "codecs": lambda: None,  # No-op
-                        "volume_range": lambda: self.handle_volume_range(parameter),
-                        "remote_led": lambda: self.handle_int_parameter(
-                            "remote_led", parameter
-                        ),
-                        "mpdport": lambda: self.handle_int_parameter(
-                            "mpdport", parameter
-                        ),
-                        "speech_volume": lambda: self.handle_int_parameter(
-                            "speech_volume", parameter
-                        ),
-                        "i2c_address": lambda: self.handle_int_parameter(
-                            "i2c_address", parameter, base=16
-                        ),
-                        "pull_up_down": lambda: setattr(
-                            self, "pull_up_down", "UP" if parameter == "up" else "DOWN"
-                        ),
-                        "display_width": lambda: self.handle_int_parameter(
-                            "display_width", parameter
-                        ),
-                        "display_lines": lambda: self.handle_int_parameter(
-                            "display_lines", parameter
-                        ),
-                        "scroll_speed": lambda: self.handle_int_parameter(
-                            "scroll_speed", parameter
-                        ),
-                        "screen_size": lambda: setattr(self, "screen_size", parameter),
-                        "fullscreen": lambda: setattr(self, "fullscreen", parameter),
-                    }
-
-                    # Default handler for `_color` and `_switch`
-                    if "_color" in option:
-                        self.rgbcolors[option] = parameter
-                    elif "_switch" in option and "menu_switch_value" not in option:
-                        self.handle_int_parameter("switches", parameter)
-                    elif option in dispatch_table:
-                        dispatch_table[option]()
-                    else:
-                        print(f"Unhandled option: {option} in section {section}")
-
-            except configparser.NoSectionError:
-                print(f"Section {section} missing in configuration file.")
-
-    def handle_int_parameter(self, attr, parameter, base=10):
-        try:
-            setattr(self, attr, int(parameter, base))
-        except ValueError:
-            self.invalidParameter("ConfigFile", attr, parameter)
-
-    def handle_volume_range(self, parameter):
-        try:
-            range_val = max(10, min(100, int(parameter)))
-            self.volume_range = range_val
-            self.volume_increment = 100 // range_val
-        except ValueError:
-            self.invalidParameter("ConfigFile", "volume_range", parameter)
-
     # Get configuration options from /etc/radiod.conf
-    def getConfig_old(self):
+    def getConfig(self):
         section = "RADIOD"
 
         # Get options from /etc/radiod.conf
