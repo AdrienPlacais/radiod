@@ -58,8 +58,6 @@ class Button:
         self.pull_up_down = pull_up_down
         self.log = log
 
-        print(f"called_run with {button = } {callback = } {log = } {pull_up_down = }")
-
         if self.button <= 0:
             return
         GPIO.setwarnings(False)
