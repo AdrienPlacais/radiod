@@ -78,7 +78,7 @@ class Button:
                 self.button, edge, callback=self.button_event, bouncetime=200
             )
         except Exception as e:
-            log.message("Button GPIO {self.button} initialise error: {e}", log.ERROR)
+            log.message(f"Button GPIO {self.button} initialise error: {e}", log.ERROR)
             sys.exit(1)
 
     def button_event(self, button: int) -> None:
