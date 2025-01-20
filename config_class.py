@@ -805,19 +805,9 @@ class Configuration:
             true_false = True
         return true_false
 
-    # Invalid parameters message
-    def invalidParameter(self, ConfigFile, option, parameter):
-        msg = (
-            "Invalid parameter "
-            + parameter
-            + " in option "
-            + option
-            + " in "
-            + ConfigFile
-        )
-        log.message(msg, log.ERROR)
-
-    # Get routines
+    def invalidParameter(self, ConfigFile: str, option: str, parameter: str) -> None:
+        """Log an invalid parameter message."""
+        log.message(f"Invalid {parameter = } in {option = } in {ConfigFile}", log.ERROR)
 
     # Get I2C backpack address
     @property
