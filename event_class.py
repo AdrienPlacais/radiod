@@ -468,7 +468,7 @@ class Event:
 
         if self.user_interface == self.config.ROTARY_ENCODER:
             self.setRotaryInterface()
-            self.set_telefunken_interface()
+            # self.set_telefunken_interface()
 
         # The Adafruit and Piface CAD interfaces use I2C and SPI respectively
         elif (

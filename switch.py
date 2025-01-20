@@ -74,7 +74,7 @@ class Switch(Button):
         state_str = "ON" if self.state else "OFF"
         self.log.message(
             f"Switch initialized on GPIO {gpio} with initial state {state_str} "
-            f"(inverted: {self.invert_logic})",
+            f"(inverted: {self.invert_logic}). {name = }",
             self.log.DEBUG,
         )
 
