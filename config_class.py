@@ -643,14 +643,7 @@ class Configuration:
                     self.pivumeter = parameter
 
                 else:
-                    msg = (
-                        "Invalid option "
-                        + option
-                        + " in section "
-                        + section
-                        + " in "
-                        + ConfigFile
-                    )
+                    msg = f"Invalid {option = } in {section = } in {ConfigFile})"
                     log.message(msg, log.ERROR)
 
         except configparser.NoSectionError:
