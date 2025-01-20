@@ -21,34 +21,34 @@ class TeleButtons:
 
     """
 
-    def __init__(self, buttons: Sequence[Switch]) -> None:
-        """Create object from several buttons."""
-        self.buttons = buttons
+    def __init__(self, switches: Sequence[Switch]) -> None:
+        """Create object from several switches."""
+        self.switches = switches
 
     @property
     def off(self) -> Switch:
         """Give the leftmost button."""
-        return self.buttons[0]
+        return self.switches[0]
 
     @property
     def fip(self) -> Switch:
         """Give the 2nd button, starting from left."""
-        return self.buttons[1]
+        return self.switches[1]
 
     @property
     def spotify(self) -> Switch:
         """Give the 3rd button, starting from left."""
-        return self.buttons[2]
+        return self.switches[2]
 
     @property
     def unused(self) -> Switch:
         """Give the 4th button, starting from left."""
-        return self.buttons[3]
+        return self.switches[3]
 
     @property
     def disco(self) -> Switch:
         """Give the last button."""
-        return self.buttons[4]
+        return self.switches[4]
 
 
 if __name__ == "__main__":
