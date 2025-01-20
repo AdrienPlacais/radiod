@@ -4,11 +4,10 @@
 The difference with Button is that Switch keeps it's current state.
 
 """
-
 import sys
+import threading
 import time
 from collections.abc import Callable
-from typing import Literal
 
 import RPi.GPIO as GPIO
 from button_class import Button
@@ -19,109 +18,123 @@ class Switch(Button):
     """
     A class representing a switch that inherits from the Button class.
 
-    The Switch class maintains a persistent state (ON/OFF) and toggles this
-    state each time it is pressed.
-
+    The Switch class triggers an action immediately after the button is pressed
+    for a specified duration (`MIN_PRESS_DURATION`).
     """
 
     def __init__(
         self,
         gpio: int,
         log: Log,
-        pull_up_down: Literal["UP", "DOWN"] = "UP",
+        pull_up_down: str = "UP",
         callback: Callable | None = None,
-        stable_time: float = 0.05,
         name: str = "",
         invert_logic: bool = True,
+        press_duration: float = 0.5,  # Minimum press duration to trigger action
     ) -> None:
-        """Initialize the Switch object."""
-        self._name = name
-        if callback is None:
-            callback = self._debug_callback
-        self.gpio = gpio
-        self.callback = callback
-        self.log = log
-        self.pull_up_down = pull_up_down
-        self.stable_time = stable_time
-        self.invert_logic = invert_logic
-
-        raw_state: bool = GPIO.input(gpio)
-        self.state: bool = not raw_state if invert_logic else raw_state
-        self.last_state_time: float = time.time()
-
-        # Configure GPIO
-        GPIO.setup(
-            gpio,
-            GPIO.IN,
-            pull_up_down=GPIO.PUD_DOWN if pull_up_down == "DOWN" else GPIO.PUD_UP,
-        )
-        edge = GPIO.RISING if pull_up_down == "DOWN" else GPIO.FALLING
-        GPIO.add_event_detect(gpio, edge, callback=self.button_event, bouncetime=200)
-
-        state_str = "ON" if self.state else "OFF"
-        self.log.message(
-            f"Switch initialized on GPIO {gpio} with initial state {state_str} "
-            f"(inverted: {self.invert_logic}). {name = }",
-            self.log.DEBUG,
-        )
-
-    def button_event(self, button: int) -> None:
-        """Handle the switch press event.
-
-        Confirm state changes only if the new state is stable for the specified
-        duration.
+        """
+        Initialize the Switch object.
 
         Parameters
         ----------
-        button : int
-            The GPIO pin number where the event occurred.
+        gpio : int
+            GPIO pin number for the switch.
+        log : Log
+            Logging object for messages.
+        pull_up_down : str, optional
+            Pull resistor configuration: "UP" or "DOWN".
+        callback : Callable, optional
+            Function to call when the button action is triggered.
+        stable_time : float, optional
+            Time in seconds for the state to stabilize. Default is 0.05.
+        name : str, optional
+            Name of the switch for logging purposes.
+        invert_logic : bool, optional
+            If True, inverts the ON/OFF logic. Default is True.
+        press_duration : float, optional
+            Minimum time the button must be pressed to trigger the action.
 
         """
-        print("button event")
-        raw_state = GPIO.input(button)
-        current_state = not raw_state if self.invert_logic else raw_state
-        current_time = time.time()
+        if callback is None:
+            callback = self._debug_callback
+        super().__init__(gpio, callback, log, pull_up_down)
+        self._name = name
+        self.state = False if name != "OFF" else True
+        self.press_duration = press_duration
+        self.last_press_time = None
+        self.action_triggered = False
+        self.invert_logic = invert_logic
 
-        # Check if the state has been stable for the required time
-        if (
-            current_state != self.state
-            and (current_time - self.last_state_time) >= self.stable_time
-        ):
-            # Update the switch state
-            self.state = current_state
-            self.last_state_time = current_time
+        self._polling_thread = threading.Thread(
+            target=self._poll_press_duration, daemon=True
+        )
+        self._polling_thread.start()
 
-            # Log the state change
-            state_str = "ON" if self.state else "OFF"
+    @property
+    def gpio(self) -> int:
+        """Alias for button."""
+        return self.button
+
+    def button_event(self, button: int) -> None:
+        """
+        Handle GPIO events for button presses and releases.
+
+        Parameters
+        ----------
+        channel : int
+            GPIO pin number where the event occurred.
+
+        """
+        state = GPIO.input(button)
+        is_pressed = not state if self.invert_logic else state
+
+        if is_pressed:
             self.log.message(
-                f"Switch event on GPIO {button}: State changed to {state_str}",
-                self.log.DEBUG,
+                f"Button {self._name} pressed on GPIO {button}", self.log.DEBUG
             )
+            self.last_press_time = time.time()
+            self.action_triggered = False  # Reset the action flag
+        else:
+            self.log.message(
+                f"Button {self._name} released on GPIO {button}", self.log.DEBUG
+            )
+            self.last_press_time = None
 
-            # Invoke the callback with the GPIO pin and the new state
-            self.callback(button, self.state)
+    def _poll_press_duration(self) -> None:
+        """
+        Poll the press duration and trigger the action if the button is held
+        for the required time.
+        """
+        while True:
+            if self.last_press_time and not self.action_triggered:
+                elapsed_time = time.time() - self.last_press_time
+                if elapsed_time >= self.press_duration:
+                    self.action_triggered = (
+                        True  # Ensure the action is triggered only once
+                    )
+                    self.log.message(
+                        f"Button {self._name} held for {elapsed_time:.2f} seconds, triggering action.",
+                        self.log.INFO,
+                    )
+                    self.callback(self.gpio, True)  # Call the callback
+            time.sleep(0.05)  # Polling interval
 
-    def get_state(self) -> bool:
-        """Get the current state of the switch.
+    def pressed(self) -> bool:
+        """
+        Check if the button is currently pressed.
 
         Returns
         -------
         bool
-            True if the switch is ON, False if it is OFF.
+            True if the button is pressed, False otherwise.
 
         """
-        return self.state
+        state = GPIO.input(self.gpio)
+        return not state if self.invert_logic else state
 
-    def _debug_callback(self, *args, **kwargs) -> None:
+    def _debug_callback(self, gpio: int, state: bool) -> None:
         """Print a message when the button is pressed."""
-        state_str = "ON" if self.state else "OFF"
-        print(
-            f"[DEBUG] Switch {self._name} on GPIO {self.button} changed state to {state_str}"
-        )
-
-    def pressed(self) -> bool:
-        print("pressed")
-        return super().pressed()
+        print(f"[DEBUG] Switch {self._name} on GPIO {gpio} changed state to {state}")
 
 
 if __name__ == "__main__":

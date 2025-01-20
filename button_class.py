@@ -47,7 +47,11 @@ class Button:
         t.start()
 
     def _run(
-        self, button: int, callback: Callable, log: Log, pull_up_down: Literal[0, 1]
+        self,
+        button: int,
+        callback: Callable,
+        log: Log,
+        pull_up_down: str | int,
     ) -> None:
         self.button = button
         self.callback = callback
