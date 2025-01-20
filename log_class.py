@@ -12,23 +12,23 @@
 #        The authors shall not be liable for any loss or damage however caused.
 #
 # Log levels are :
-#   CRITICAL 50 
-#   ERROR 40 
-#   WARNING 30 
-#   INFO 20 
-#   DEBUG 10 
-#   NOTSET 0 
+#   CRITICAL 50
+#   ERROR 40
+#   WARNING 30
+#   INFO 20
+#   DEBUG 10
+#   NOTSET 0
 #
 #  See https://docs.python.org/2/library/logging.html
 #
 
-import os,sys
-import logging
-import logging.handlers as handlers
 import configparser
+import logging
+
 config = configparser.ConfigParser()
 
 ConfigFile = "/etc/radiod.conf"
+
 
 class Log:
 
@@ -39,30 +39,30 @@ class Log:
     DEBUG = logging.DEBUG
     NONE = 0
 
-    module = ''     # Module name for log entries
+    module = ""  # Module name for log entries
     loglevel = logging.INFO
-    sMessage = ''   # Duplicate message prevention
+    sMessage = ""  # Duplicate message prevention
 
     def __init__(self):
-        return 
+        return
 
     # Initialise log and set module name (usually "radio")
-    def init(self,module):
+    def init(self, module):
         self.module = module
         self.loglevel = self.getConfig()
-        return 
+        return
 
     # Get module name (usually "radio") to check if initialised
     def getName(self):
         return self.module
 
-    def message(self,message,level):
-        # Set up logging, level 
+    def message(self, message, level):
+        # Set up logging, level
         if level != self.NONE and message != self.sMessage:
             try:
-                logger = logging.getLogger('gipiod')
-                hdlr = logging.FileHandler('/var/log/radiod/' + self.module + '.log')
-                formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+                logger = logging.getLogger("gipiod")
+                hdlr = logging.FileHandler("/var/log/radiod/" + self.module + ".log")
+                formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
                 hdlr.setFormatter(formatter)
                 logger.addHandler(hdlr)
                 logger.setLevel(self.loglevel)
@@ -84,16 +84,16 @@ class Log:
                 self.sMessage = message
 
             except Exception as e:
-                print (str(e))
+                print(str(e))
         return
 
     # Truncate the log file
     def truncate(self):
-        logging.FileHandler('/var/log/radiod/' + self.module + '.log','w')
+        logging.FileHandler("/var/log/radiod/" + self.module + ".log", "w")
         return
 
     # Temporary set log level
-    def setLevel(self,level):
+    def setLevel(self, level):
         self.loglevel = level
         return
 
@@ -103,18 +103,18 @@ class Log:
 
     # Get configuration loglevel option
     def getConfig(self):
-        section = 'RADIOD'
-        option = 'loglevel'
-        strLogLevel = 'INFO'
+        section = "RADIOD"
+        option = "loglevel"
+        strLogLevel = "INFO"
 
         # Get loglevel option
         config.read(ConfigFile)
         try:
-            strLogLevel = config.get(section,option)
+            strLogLevel = config.get(section, option)
 
         except configparser.NoSectionError:
-            msg = configparser.NoSectionError(section),'in',ConfigFile
-            self.message(msg,self.ERROR)
+            msg = configparser.NoSectionError(section), "in", ConfigFile
+            self.message(msg, self.ERROR)
 
         if strLogLevel == "CRITICAL":
             loglevel = self.CRITICAL
@@ -131,6 +131,7 @@ class Log:
         else:
             loglevel = self.INFO
         return loglevel
+
 
 # End of log class
 
