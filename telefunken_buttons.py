@@ -77,18 +77,12 @@ if __name__ == "__main__":
     print(f"unused_switch GPIO: {unused_gpio}")
     print(f"disco_switch GPIO: {disco_gpio}")
 
-    kwargs = {
-        "log": log,
-        "pull_up_down": config.pull_up_down,
-        "bouncetime": 1000,
-        "callback": None,
-    }
     for gpio, name in zip(
         (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
         ("OFF", "FIP", "SPOTIFY", "UNUSED", "DISCO"),
         strict=True,
     ):
-        _ = Switch(button=gpio, name=name, **kwargs)
+        _ = Switch(gpio=gpio, log=log, pull_up_down=config.pull_up_down, name=name)
 
     try:
         while True:

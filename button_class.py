@@ -70,7 +70,7 @@ class Button:
         try:
             msg = f"Creating button object for GPIO {self.button} {sEdge = }"
             log.message(msg, log.DEBUG)
-            # The following lines enable the internal pull-up resistor
+            # Enable the internal pull-up resistor
             GPIO.setup(self.button, GPIO.IN, pull_up_down=resistor)
 
             # Add event detection to the GPIO inputs
