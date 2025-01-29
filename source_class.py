@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Raspberry Pi Radio 
+# Raspberry Pi Radio
 # The source class handles loading of sources and playlists from
 # the /var/lib/mpd/source.directory including the radio playlist
 # or indicates that airplay needs to be loaded (see radio_class.py)
@@ -18,45 +18,50 @@
 # Playlists for MPD are stored in /var/lib/mpd/source.directory
 # All MPD playlists have the .m3u file extension
 # Airplay and Spotify are not part of MPD and are not associated with playlists
-# however they is stored as a pseudo playlists called _airplay_ and _spotify_ 
-# respectively for the purpose of searching through the available sources   
+# however they is stored as a pseudo playlists called _airplay_ and _spotify_
+# respectively for the purpose of searching through the available sources
 
-import os,sys,pwd
-from log_class import Log
-from mpd import MPDClient
-from constants import *
+import os
 import pdb
+import pwd
+import sys
+
+from mpd import MPDClient
+
+from constants import *
+from log_class import Log
 
 log = Log()
 
 # Definitions
 PlaylistsDir = "/var/lib/mpd/playlists"
 
+
 class Source:
 
-    client = None   # MPD client
+    client = None  # MPD client
     playlists = {}  # Dictionary of playlists and their types
-    index = 0   # Index of current playlist/source
-    new_index = 0   # Index of new playlist/source
+    index = 0  # Index of current playlist/source
+    new_index = 0  # Index of new playlist/source
     mpdport = 6600  # MPD port
 
     # Source types (There are 4 source types)
-    RADIO = 0   # Radio usually has one playlist but can have more
-    MEDIA = 1   # Media can have one or more playlists with any name
-    AIRPLAY = 2 # Airplay is not part of MPD and has no associated playlists
-    SPOTIFY = 3 # Spotify is not part of MPD and has no associated playlists
+    RADIO = 0  # Radio usually has one playlist but can have more
+    MEDIA = 1  # Media can have one or more playlists with any name
+    AIRPLAY = 2  # Airplay is not part of MPD and has no associated playlists
+    SPOTIFY = 3  # Spotify is not part of MPD and has no associated playlists
 
-    typeNames = ['RADIO','MEDIA','AIRPLAY','SPOTIFY']
-    
+    typeNames = ["RADIO", "MEDIA", "AIRPLAY", "SPOTIFY"]
+
     type = RADIO
 
-    # Initialise. The airplay parameter adds a dummy entry 
+    # Initialise. The airplay parameter adds a dummy entry
     # to the list of playlists
     def __init__(self, client=client, airplay=False, spotify=False):
         self.airplay = airplay
         self.spotify = spotify
         self.client = client
-        log.init('radio')
+        log.init("source_class")
         return
 
     # Load the source.
@@ -66,42 +71,46 @@ class Source:
         try:
             # Get the list of playlists from MPD
             mylist = self.client.listplaylists()
-            mylist = sorted(mylist, key = lambda info: info['playlist'])
-            
-            for i,info in enumerate(mylist):
-                playlist = info['playlist']
+            mylist = sorted(mylist, key=lambda info: info["playlist"])
+
+            for i, info in enumerate(mylist):
+                playlist = info["playlist"]
                 type = self.getPlaylistType(playlist)
                 self.playlists[playlist] = type
-                
+
             if len(self.playlists) > 0:
-                msg = "Loaded " + str(len(self.playlists)) + \
-                         " playlists from " + PlaylistsDir
+                msg = (
+                    "Loaded "
+                    + str(len(self.playlists))
+                    + " playlists from "
+                    + PlaylistsDir
+                )
                 log.message(msg, log.DEBUG)
             else:
                 log.message("No playlists found in " + PlaylistsDir, log.ERROR)
 
             # If airplay create a 'dummy' playlist
             if self.airplay:
-                self.playlists['_airplay_'] = self.AIRPLAY
+                self.playlists["_airplay_"] = self.AIRPLAY
 
             # If spotify create a 'dummy' playlist
             if self.spotify:
-                self.playlists['_spotify_'] = self.SPOTIFY
+                self.playlists["_spotify_"] = self.SPOTIFY
 
         except Exception as e:
             log.message("source.load: " + str(e), log.DEBUG)
 
         if len(self.playlists) < 1:
-            self.playlists = {'No playlists': 0}
-        
+            self.playlists = {"No playlists": 0}
+
         log.message(self.playlists, log.DEBUG)
 
         return self.playlists
-    
+
     # Get current playlist
     def current(self):
-        playlist = ''
-        try: 
+        playlist = ""
+        try:
             playlist = list(self.playlists.keys())[self.index]
         except:
             log.message("Error getting current playlist" + str(self.index), log.DEBUG)
@@ -112,31 +121,31 @@ class Source:
     # namely radio,media or airplay
     def cycleType(self, type):
         newtype = -1
-        idx = self.index 
+        idx = self.index
         playlist = self.getName()
-        while type != newtype: 
+        while type != newtype:
             self.cycle(UP)
             newtype = self.getNewType()
             if idx == self.new_index:
                 break
-        if type == newtype: 
+        if type == newtype:
             playlist = self.getNewName()
         return playlist
 
     # Cycle through playlist
     def cycle(self, direction):
-        newplaylist = ''
+        newplaylist = ""
 
         if direction == UP:
             self.new_index += 1
         else:
             self.new_index -= 1
 
-        if self.new_index > len(self.playlists)-1:
+        if self.new_index > len(self.playlists) - 1:
             self.new_index = 0
 
         elif self.new_index < 0:
-            self.new_index = len(self.playlists)-1
+            self.new_index = len(self.playlists) - 1
 
         try:
             newplaylist = list(self.playlists.keys())[self.new_index]
@@ -144,31 +153,31 @@ class Source:
             log.message("Error cycling playlist" + str(self.new_index), log.DEBUG)
         return newplaylist
 
-    # Set new source type (from radio class) 
+    # Set new source type (from radio class)
     def setNewType(self):
         self.index = self.new_index
         return self.index
 
     # Set source index
-    def setIndex(self,index):
+    def setIndex(self, index):
         index = self.checkIndex(index)
         self.index = index
         self.new_index = index
         return self.index
 
-    # Set playlist index by name 
-    def setPlaylist(self,playlist):
+    # Set playlist index by name
+    def setPlaylist(self, playlist):
         idx = 0
         index = 0
         pl = playlist.lower()
-        for name,value in self.playlists.items():
+        for name, value in self.playlists.items():
             name = name.lower()
             if name == pl:
                 index = idx
                 break
-            idx += 1    
+            idx += 1
         self.setIndex(index)
-        return 
+        return
 
     # Get source index
     def getIndex(self):
@@ -184,8 +193,8 @@ class Source:
         playlist = list(self.playlists.keys())[self.new_index]
         return playlist
 
-    # Get the source name for displayng on screen 
-    def getDisplayName(self): 
+    # Get the source name for displayng on screen
+    def getDisplayName(self):
         self.index = self.checkIndex(self.index)
         playlist = list(self.playlists.keys())[self.index]
         playlist = playlist.lstrip()
@@ -194,10 +203,10 @@ class Source:
         playlist = playlist[:1].upper() + playlist[1:]
 
         # Convert pseudo playlist(source) names to readable
-        if playlist == '_spotify_':
-            playlist = 'Spotify'
-        elif playlist == '_airplay_':
-            playlist = 'Airplay'
+        if playlist == "_spotify_":
+            playlist = "Spotify"
+        elif playlist == "_airplay_":
+            playlist = "Airplay"
         return playlist
 
     # Get playlist type. RADIO, MEDIA, AIRPLAY or SPOTIFY
@@ -205,16 +214,16 @@ class Source:
         return self._getType(self.index)
 
     # Set the type RADIO, MEDIA, AIRPLAY or SPOTIFY
-    def setType(self,type):
+    def setType(self, type):
         idx = 0
         newtype = -1
         playlist = self.getName()
-        while type != newtype: 
+        while type != newtype:
             self.cycle(UP)
             newtype = self.getNewType()
             if idx == self.new_index:
                 break
-        if type == newtype: 
+        if type == newtype:
             return playlist
 
     # Routine to load O!MPD web interface library
@@ -223,19 +232,19 @@ class Source:
         playlists = self.load()
         currentsong = self.client.currentsong()
         path = str(currentsong.get("file"))
-        path = path.lstrip('/')
-        mount_point = path.split('/')[0]
+        path = path.lstrip("/")
+        mount_point = path.split("/")[0]
         if mount_point == "media":
             playlist = "USB_Stick"
         elif mount_point == "share":
             playlist = "Network"
-        else: 
+        else:
             playlist = "Unknown"
 
         if playlist == "Unknown":
             playlist = self.cycleType(self.MEDIA)
         self.type = self.MEDIA
-        return  playlist
+        return playlist
 
     # Return the new type (radio, media or airplay)
     def getNewType(self):
@@ -244,38 +253,38 @@ class Source:
     # Get playlist type Name. RADIO, MEDIA or AIRPLAY
     def getTypeName(self):
         return self.typeNames[self.index]
-    
+
     # Get NEW playlist type Name. RADIO, MEDIA or AIRPLAY
     def getNewTypeName(self):
         return self.typeNames[self.getNewType()]
-    
+
     # Get new playlist type. RADIO, MEDIA,AIRPLAY or SPOTIFY
     # This routine is only used during loading the available playlists
-    def getPlaylistType(self,playlist):
+    def getPlaylistType(self, playlist):
         type = self.MEDIA
-    
-        if playlist == '_airplay_':
-            type = self.AIRPLAY     
 
-        if playlist == '_spotify_':
-            type = self.SPOTIFY     
+        if playlist == "_airplay_":
+            type = self.AIRPLAY
+
+        if playlist == "_spotify_":
+            type = self.SPOTIFY
 
         else:
             type = self._getPlaylistType(playlist)
-            
+
         return type
 
     # Identify playlist type RADIO or MEDIA by file contents
-    def _getPlaylistType(self,playlist_name):
+    def _getPlaylistType(self, playlist_name):
         playlist_type = self.MEDIA
-        playlist_file = PlaylistsDir + '/' + playlist_name + '.m3u'
-        typeNames = ['RADIO','MEDIA']
+        playlist_file = PlaylistsDir + "/" + playlist_name + ".m3u"
+        typeNames = ["RADIO", "MEDIA"]
 
         # Check playlist for "#EXTM3U" definition
         count = 10  # Allow comments 10 lines max at start of file
         found = False
         try:
-            f = open(playlist_file, 'r')
+            f = open(playlist_file, "r")
             while count > 0 and not found:
                 line = f.readline()
                 line = line.rstrip()
@@ -291,7 +300,7 @@ class Source:
 
         f.close()
 
-        #print("Processing",playlist_file,typeNames[playlist_type])
+        # print("Processing",playlist_file,typeNames[playlist_type])
         return playlist_type
 
     # Get the playlists dictionary
@@ -299,8 +308,8 @@ class Source:
         return self.playlists
 
     # Get new playlist type. RADIO, MEDIA, AIRPLAY or SPOTIFY
-    def _getType(self,index):
-    
+    def _getType(self, index):
+
         index = self.checkIndex(index)
         type = list(self.playlists.values())[index]
 
@@ -311,11 +320,10 @@ class Source:
         return self.typeNames
 
     # Protect the routines from a bad index value
-    def checkIndex(self,index):
+    def checkIndex(self, index):
         leng = len(self.playlists)
         if index > leng - 1:
-            msg = "source.checkIndex index " + str(index) \
-                 + " > " + str(leng)
+            msg = "source.checkIndex index " + str(index) + " > " + str(leng)
             log.message(msg, log.ERROR)
             self.index = 0
             self.new_index = 0
@@ -323,34 +331,34 @@ class Source:
             self.index = index
         return self.index
 
+
 # End of sources class
 
 ### Test routine ###
 if __name__ == "__main__":
-    
+
     client = MPDClient()
     client.connect("localhost", 6600)
 
     print("Test Source Class")
-    source = Source(client=client,airplay=True)
+    source = Source(client=client, airplay=True)
     airplay = True  # Simulate airplay
     source.load()
     print(source.current())
     print()
     print(source.getDisplayName())
-    print(source.cycle(UP),'type',str(source.getNewType()))
-    print(source.cycle(UP),'type',str(source.getNewType()))
-    print(source.cycle(UP),'type',str(source.getNewType()))
-    print(source.cycle(UP),'type',str(source.getNewType()))
+    print(source.cycle(UP), "type", str(source.getNewType()))
+    print(source.cycle(UP), "type", str(source.getNewType()))
+    print(source.cycle(UP), "type", str(source.getNewType()))
+    print(source.cycle(UP), "type", str(source.getNewType()))
     print("New", source.getNewName())
     print()
-    print(source.cycle(DOWN),source.getNewType())
-    print(source.getName(),'type', source.getNewType())
-    print(source.cycle(UP),'type',str(source.getNewType()))
+    print(source.cycle(DOWN), source.getNewType())
+    print(source.getName(), "type", source.getNewType())
+    print(source.cycle(UP), "type", str(source.getNewType()))
     sys.exit(0)
 
 # End of test program
 
 # set tabstop=4 shiftwidth=4 expandtab
 # retab
-
