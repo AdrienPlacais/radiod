@@ -189,7 +189,7 @@ class Event:
     # Initialisation routine
     def __init__(self, config):
         self.config = config
-        log.init("radio")
+        log.init("event_class")
         self.getConfiguration()
         self.setInterface()
         self.setupRotarySwitch()
@@ -470,7 +470,6 @@ class Event:
 
         if self.user_interface == self.config.ROTARY_ENCODER:
             self.setRotaryInterface()
-            # self.set_telefunken_interface()
 
         # The Adafruit and Piface CAD interfaces use I2C and SPI respectively
         elif (
@@ -488,6 +487,7 @@ class Event:
             self.setCosmicInterface()
 
         elif self.user_interface == self.config.TELEFUNKEN:
+            self.setRotaryInterface()
             self.set_telefunken_interface()
 
         return
@@ -676,6 +676,9 @@ class Event:
         """
         global off_button, fip_button, spotify_button, unused_button, disco_button
 
+        if event_gpio in (self.left_switch, self.right_switch, self.mute_switch):
+            return
+
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
         self.event_triggered = True
 
@@ -697,7 +700,6 @@ class Event:
             ``_switch`` objects are int (GPIO number).
 
         """
-        self.setRotaryInterface()
         global off_button, fip_button, spotify_button, unused_button, disco_button
 
         up_down = self.config.pull_up_down if self.config is not None else 1
