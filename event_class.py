@@ -715,35 +715,36 @@ class Event:
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light
+            disco_light=disco_light,
         )
         fip_button = Switch(
             gpio=self.fip_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light
+            disco_light=disco_light,
         )
         spotify_button = Switch(
             gpio=self.spotify_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light
+            disco_light=disco_light,
         )
         unused_button = Switch(
             gpio=self.unused_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light
-            )
+            disco_light=disco_light,
+        )
         disco_button = Switch(
             gpio=self.disco_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light
+            disco_light=disco_light,
+            disco_activator=True,
         )
         return
 
