@@ -22,6 +22,7 @@ class DiscoLight:
         GPIO.setwarnings(False)
         if self.gpio > 0:
             GPIO.setup(self.gpio, GPIO.OUT)
+            self.set(self.OFF)
 
     def __str__(self) -> str:
         """Return info on object."""
