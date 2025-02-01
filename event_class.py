@@ -20,6 +20,7 @@
 import sys
 import time
 
+from disco_light import DiscoLight
 from log_class import Log
 from rotary_class import RotaryEncoder
 from rotary_class_alternative import RotaryEncoderAlternative
@@ -682,6 +683,8 @@ class Event:
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
         self.event_triggered = True
 
+        # If the button is released, do nothing
+        # the disco light will be shutoff by Switch event
         if not new_state:
             return
 
@@ -700,40 +703,47 @@ class Event:
             ``_switch`` objects are int (GPIO number).
 
         """
-        global off_button, fip_button, spotify_button, unused_button, disco_button
+        global off_button, fip_button, spotify_button, unused_button, disco_button, disco_light
 
         up_down = self.config.pull_up_down if self.config is not None else 1
         log.message(f"event.setTelefunkenInterface {up_down = }", log.DEBUG)
+
+        disco_light = DiscoLight(gpio=self.config.getSwitchGpio("disco_light"))
 
         off_button = Switch(
             gpio=self.off_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
+            disco_light=disco_light
         )
         fip_button = Switch(
             gpio=self.fip_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
+            disco_light=disco_light
         )
         spotify_button = Switch(
             gpio=self.spotify_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
+            disco_light=disco_light
         )
         unused_button = Switch(
             gpio=self.unused_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
+            disco_light=disco_light
             )
         disco_button = Switch(
             gpio=self.disco_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
+            disco_light=disco_light
         )
         return
 
