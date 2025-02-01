@@ -23,6 +23,7 @@ class DiscoLight:
         if self.gpio > 0:
             GPIO.setup(self.gpio, GPIO.OUT)
             self.set(self.OFF)
+            print(f"Created {str(self)}")
 
     def __str__(self) -> str:
         """Return info on object."""
@@ -30,6 +31,7 @@ class DiscoLight:
 
     def set(self, status: Literal[0, 1]) -> Literal[0, 1]:
         """Change state of light."""
+        print(f"Will change {str(self)} to {status}")
         if status is self.status:
             return status
 
