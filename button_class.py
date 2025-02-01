@@ -16,7 +16,6 @@ import sys
 import threading
 import time
 from collections.abc import Callable
-from typing import Literal
 
 import RPi.GPIO as GPIO
 from constants import *
