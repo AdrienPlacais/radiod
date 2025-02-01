@@ -274,6 +274,7 @@ class Configuration:
         "unused_switch": 0,
         "disco_switch": 0,
     }
+    _disco_light = 0
 
     # Pull up/down resistors (For button class only)
     _pull_up_down = DOWN  # Default
@@ -641,6 +642,12 @@ class Configuration:
 
                 elif option == "pivumeter":
                     self.pivumeter = parameter
+
+                elif option == "disco_light":
+                    try:
+                        self.disco_light = int(parameter)
+                    except:
+                        self.invalidParameter(ConfigFile, option, parameter)
 
                 else:
                     msg = f"Invalid {option = } in {section = } in {ConfigFile})"
@@ -1516,7 +1523,16 @@ class Configuration:
     def pivumeter(self, parameter):
         self._pivumeter = self.convertYesNo(parameter)
 
-    # Get screen splash image
+    @property
+    def disco_light(self) -> int:
+        """Give GPIO associated with disco light."""
+        return self._disco_light
+
+    @disco_light.setter
+    def disco_light(self, parameter: int) -> None:
+        """Set the GPIO associated with disco light."""
+        self._disco_light = parameter
+
     @property
     def splash_screen(self):
         return self._splash_screen
@@ -1785,6 +1801,7 @@ if __name__ == "__main__":
     print("")
     for led in config.rgb_leds:
         print(led, config.getRgbLed(led))
+    print(f"Disco light GPIO: {config.disco_light}")
 
     print("")
     for menuswitch in config.menu_switches:
