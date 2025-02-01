@@ -11,6 +11,7 @@ from collections.abc import Callable
 
 import RPi.GPIO as GPIO
 from button_class import Button
+from disco_light import DiscoLight
 from log_class import Log
 
 
@@ -31,6 +32,7 @@ class Switch(Button):
         name: str = "",
         invert_logic: bool = True,
         press_duration: float = 0.1,
+        disco_light: DiscoLight | None = None,
     ) -> None:
         """
         Initialize the Switch object.
@@ -54,6 +56,8 @@ class Switch(Button):
         press_duration : float, optional
             Minimum time the button must be pressed to trigger the action in
             seconds.
+        disco_light : DiscoLight | None, optional
+            The disco light, that is turned OFF when another button is pressed.
 
         """
         if callback is None:
@@ -65,6 +69,7 @@ class Switch(Button):
         self.last_press_time = None
         self.action_triggered = False
         self.invert_logic = invert_logic
+        self.disco_light = disco_light
 
         self._polling_thread = threading.Thread(
             target=self._poll_press_duration, daemon=True
@@ -77,8 +82,7 @@ class Switch(Button):
         return self.button
 
     def button_event(self, button: int) -> None:
-        """
-        Handle GPIO events for button presses and releases.
+        """Handle GPIO events for button presses and releases.
 
         Parameters
         ----------
@@ -101,6 +105,17 @@ class Switch(Button):
             )
             self.last_press_time = None
 
+    def _switch_disco_light(self) -> None:
+        """Turn ON/OFF the disco light if necessary."""
+        if self.disco_light is None:
+            return
+        if self._name == "DISCO":
+            self.log.message(f"Disco light is turned on.", self.log.DEBUG)
+            self.disco_light.set(self.disco_light.ON)
+            return
+        self.log.message(f"Disco light is turned off.", self.log.DEBUG)
+        self.disco_light.set(self.disco_light.OFF)
+
     def _poll_press_duration(self) -> None:
         """
         Poll the press duration and trigger the action if the button is held
@@ -121,8 +136,7 @@ class Switch(Button):
             time.sleep(0.05)  # Polling interval
 
     def pressed(self) -> bool:
-        """
-        Check if the button is currently pressed.
+        """Check if the button is currently pressed.
 
         Returns
         -------
@@ -164,6 +178,8 @@ if __name__ == "__main__":
 
     print(f"Pull Up/Down resistors: {config.pull_up_down}")
 
+    disco_light = DiscoLight(config.getSwitchGpio("disco_light"))
+
     for gpio, name in zip(
         (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
         ("OFF", "FIP", "SPOTIFY", "UNUSED", "DISCO"),
@@ -175,6 +191,7 @@ if __name__ == "__main__":
             callback=None,
             pull_up_down=config.pull_up_down,
             name=name,
+            disco_light=disco_light,
         )
 
     try:
