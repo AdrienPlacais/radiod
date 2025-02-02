@@ -33,7 +33,6 @@ from message_class import Message
 from radio_class import Radio
 from radio_daemon import Daemon
 from rss_class import Rss
-
 # For retro radio only
 from status_led_class import StatusLed
 from translate_class import Translate
@@ -582,6 +581,8 @@ def handleRadioEvent(event, display, radio, menu):
         radio.handlePlaylistChange()
 
     elif event_type == event.SHUTDOWN:
+        if event.disco_light is not None:
+            event.disco_light.set(0)
         log.message("event SHUTDOWN", log.DEBUG)
         displayStop(display, message)
         radio.stopMpdDaemon()
@@ -790,6 +791,9 @@ def handleUdpEvent(event, display, radio, message):
     msg = ""
     event_type = event.getType()
     valid_event = True
+    
+    if event.disco_light is not None:
+        event.disco_light.set(0)
 
     # Version 1.7 of web interface
     if event_type == event.LOAD_RADIO:
