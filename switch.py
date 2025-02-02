@@ -33,8 +33,6 @@ class Switch:
         name: str = "",
         invert_logic: bool = True,
         press_duration: float = 0.1,
-        disco_light: DiscoLight | None = None,
-        disco_activator: bool = False,
     ) -> None:
         """
         Initialize the Switch object.
@@ -58,10 +56,6 @@ class Switch:
         press_duration : float, optional
             Minimum time the button must be pressed to trigger the action in
             seconds.
-        disco_light : DiscoLight | None, optional
-            The disco light, that is turned OFF when another button is pressed.
-        disco_activator : bool, optional
-            If current object triggers the disco light.
 
         """
         if callback is None:
@@ -81,8 +75,6 @@ class Switch:
         self.last_press_time = None
         self.action_triggered = False
         self.invert_logic = invert_logic
-        self._disco_light = disco_light
-        self._is_disco_activator = disco_activator
 
         self._polling_thread = threading.Thread(
             target=self._poll_press_duration, daemon=True
@@ -146,19 +138,6 @@ class Switch:
 
         self.log.message(f"Button {self._name} released on GPIO {gpio}", self.log.DEBUG)
         self.last_press_time = None
-
-    def _switch_disco_light(self) -> None:
-        """Turn ON/OFF the disco light if necessary."""
-        if self._disco_light is None:
-            return
-        if self._is_disco_activator:
-            self.log.message(f"Disco light is turned on.", self.log.DEBUG)
-            print(f"Disco light is turned on.")
-            self._disco_light.set(self._disco_light.ON)
-            return
-        self.log.message(f"Disco light is turned off.", self.log.DEBUG)
-        print(f"Disco light is turned off.")
-        self._disco_light.set(self._disco_light.OFF)
 
     def _poll_press_duration(self) -> None:
         """
@@ -264,8 +243,6 @@ if __name__ == "__main__":
             callback=None,
             pull_up_down=config.pull_up_down,
             name=name,
-            disco_light=disco_light,
-            disco_activator=True if name == "DISCO" else False,
         )
 
     try:
