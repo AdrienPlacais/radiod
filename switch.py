@@ -118,10 +118,7 @@ class Switch:
         try:
             msg = f"Creating button object for GPIO {self.gpio} {sEdge = }"
             log.message(msg, log.DEBUG)
-            # Enable the internal pull-up resistor
             GPIO.setup(self.gpio, GPIO.IN, pull_up_down=resistor)
-
-            # Add event detection to the GPIO inputs
             GPIO.add_event_detect(self.gpio, edge, callback=self.event, bouncetime=200)
         except Exception as e:
             log.message(f"Button GPIO {self.gpio} initialise error: {e}", log.ERROR)
@@ -141,6 +138,7 @@ class Switch:
             GPIO pin number where the event occurred.
 
         """
+        print(f"Switch event at {gpio = }")
         state = GPIO.input(gpio)
         is_pressed = not state if self.invert_logic else state
 

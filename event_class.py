@@ -681,6 +681,7 @@ class Event:
             return
 
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
+        print(f"Telefunken button event: {event_gpio} is {new_state}")
         self.event_triggered = True
 
         # If the button is released, do nothing
@@ -749,10 +750,6 @@ class Event:
         return
 
 
-# End of Event class
-
-### Main routine ###
-# Creates the event object and prints event number and name
 if __name__ == "__main__":
     from config_class import Configuration
 
@@ -774,9 +771,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print(" Stopped")
         sys.exit(0)
-
-
-# End of script
-
-# set tabstop=4 shiftwidth=4 expandtab
-# retab
