@@ -13,33 +13,28 @@
 #       The authors shall not be liable for any loss or damage however caused.
 #
 
-from constants import *
-import os,sys,pwd
-import time
+import os
+import pwd
 import signal
 import socket
-import datetime
-import subprocess
-from time import strftime
-import RPi.GPIO as GPIO
-
-import pdb
-# To set break-point: pdb.set_trace()
+import sys
+import time
 import traceback
 
+import RPi.GPIO as GPIO
 from config_class import Configuration
+from constants import *
 from display_class import Display
+from event_class import Event
 from log_class import Log
+from menu_class import Menu
+from message_class import Message
 from radio_class import Radio
 from radio_daemon import Daemon
-from event_class import Event
-from message_class import Message
-from menu_class import Menu
 from rss_class import Rss
-from translate_class import Translate
-
 # For retro radio only
 from status_led_class import StatusLed
+from translate_class import Translate
 
 config = Configuration()
 translate = Translate()
