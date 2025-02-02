@@ -12,7 +12,7 @@ This software uses the python3-mpd library. See https://packages.debian.org/sid/
 
 ## To-do
 - [ ] Software vol matching radio's
-- [ ] Spotify
+- [x] Spotify
 - [x] No sound at start up
 - [x] Set-up disco light
 
