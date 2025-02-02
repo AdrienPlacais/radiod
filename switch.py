@@ -153,19 +153,6 @@ class Switch:
         self.log.message(f"Button {self._name} released on GPIO {gpio}", self.log.DEBUG)
         self.last_press_time = None
 
-    def _switch_disco_light(self) -> None:
-        """Turn ON/OFF the disco light if necessary."""
-        if self._disco_light is None:
-            return
-        if self._is_disco_activator:
-            self.log.message(f"Disco light is turned on.", self.log.DEBUG)
-            print(f"Disco light is turned on.")
-            self._disco_light.set(self._disco_light.ON)
-            return
-        self.log.message(f"Disco light is turned off.", self.log.DEBUG)
-        print(f"Disco light is turned off.")
-        self._disco_light.set(self._disco_light.OFF)
-
     def _poll_press_duration(self) -> None:
         """
         Poll the press duration and trigger the action if the button is held
