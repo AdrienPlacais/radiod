@@ -24,6 +24,7 @@
 
 import configparser
 import logging
+import sys
 
 config = configparser.ConfigParser()
 
@@ -46,18 +47,29 @@ class Log:
     def __init__(self):
         return
 
-    # Initialise log and set module name (usually "radio")
-    def init(self, module):
+    def init(self, module: str, console_output: bool = False) -> None:
+        """Initialise log and set module name (usually "radio")."""
         self.module = module
         self.loglevel = self.getConfig()
-        return
+        self._console_output = console_output
+        if console_output:
+            logger = logging.getLogger("gipiod")
+            logger.setLevel(logging.DEBUG)
+            logger.addHandler(
+                _console_handler(
+                    "stdout",
+                    "DEBUG",
+                    True,
+                    "%(color_on)s[%(levelname)-8s] [%(filename)-20s]%(color_off)s %(message)s",
+                )
+            )
 
-    # Get module name (usually "radio") to check if initialised
-    def getName(self):
+    def getName(self) -> str:
+        """Get module name (usually "radio") to check if initialised."""
         return self.module
 
-    def message(self, message, level):
-        # Set up logging, level
+    def message(self, message: str, level: int) -> None:
+        """Print message."""
         if level != self.NONE and message != self.sMessage:
             try:
                 logger = logging.getLogger("gipiod")
@@ -133,7 +145,45 @@ class Log:
         return loglevel
 
 
-# End of log class
+def _console_handler(
+    output: str, level: str, color: bool, line_template: str
+) -> logging.Handler:
+    """Set up the console handler."""
+    output_stream = sys.stdout if output.lower() == "stdout" else sys.stderr
+    console_handler = logging.StreamHandler(output_stream)
+    console_handler.setLevel(level.upper())
+    console_formatter = LogFormatter(fmt=line_template, color=color)
+    console_handler.setFormatter(console_formatter)
+    return console_handler
 
-# set tabstop=4 shiftwidth=4 expandtab
-# retab
+
+class LogFormatter(logging.Formatter):
+    """Logging formatter supporting colorized output."""
+
+    COLOR_CODES = {
+        # bright/bold magenta
+        logging.CRITICAL: "\033[1;35m",
+        # bright/bold red
+        logging.ERROR: "\033[1;31m",
+        # bright/bold yellow
+        logging.WARNING: "\033[1;33m",
+        # white / light gray
+        logging.INFO: "\033[0;37m",
+        # bright/bold black / dark gray
+        logging.DEBUG: "\033[1;30m",
+    }
+
+    RESET_CODE = "\033[0m"
+
+    def __init__(self, color: bool, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.color = color
+
+    def format(self, record: logging.LogRecord, *args, **kwargs) -> str:
+        if self.color and record.levelno in self.COLOR_CODES:
+            record.color_on = self.COLOR_CODES[record.levelno]
+            record.color_off = self.RESET_CODE
+        else:
+            record.color_on = ""
+            record.color_off = ""
+        return super().format(record, *args, **kwargs)
