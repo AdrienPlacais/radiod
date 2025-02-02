@@ -83,7 +83,7 @@ class Switch:
             log.message(msg, log.DEBUG)
             GPIO.setup(self.gpio, GPIO.IN, pull_up_down=pull_up_down)
             GPIO.add_event_detect(
-                self.gpio, edge, callback=self.callback_wrapper, bouncetime=bouncetime
+                self.gpio, edge, callback=self.callback, bouncetime=bouncetime
             )
         except Exception as e:
             log.message(f"Button GPIO {self.gpio} initialise error: {e}", log.ERROR)
@@ -111,9 +111,9 @@ class Switch:
 
         self.log.message(f"Button {self._name} released on GPIO {gpio}", self.log.DEBUG)
 
-    def _debug_callback(self, gpio: int, state: bool) -> None:
+    def _debug_callback(self, gpio: int) -> None:
         """Print a message when the button is pressed."""
-        print(f"[DEBUG] Switch {self._name} on GPIO {gpio} changed state to {state}")
+        print(f"[DEBUG] Switch {self._name} on GPIO {gpio} changed state")
 
 
 def pud_settings(detect: Literal["rising", "falling", "both"]) -> tuple[int, int]:
@@ -162,9 +162,7 @@ if __name__ == "__main__":
     print(f"unused_switch GPIO: {unused_gpio}")
     print(f"disco_switch GPIO: {disco_gpio}")
 
-    print(f"Pull Up/Down resistors: {config.pull_up_down}")
-
-    disco_light = DiscoLight(config.getSwitchGpio("disco_light"))
+    # disco_light = DiscoLight(config.getSwitchGpio("disco_light"))
 
     for gpio, name, detect in zip(
         (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
