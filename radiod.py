@@ -223,9 +223,9 @@ class MyDaemon(Daemon):
 
         time.sleep(1.25)  # Allow time to display IP address
 
-        loadSource(display, radio)
-        current_id = radio.getCurrentID()
-        radio.play(current_id)
+        # loadSource(display, radio)
+        # current_id = radio.getCurrentID()
+        # radio.play(current_id)
 
         progcall = str(sys.argv)
         log.message("Radio " + progcall + " Version " + radio.getVersion(), log.INFO)
