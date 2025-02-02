@@ -8,16 +8,17 @@ import sys
 import threading
 import time
 from collections.abc import Callable
+from typing import Literal
 
 import RPi.GPIO as GPIO
-from button_class import Button
 from disco_light import DiscoLight
 from log_class import Log
 
+GPIO.setmode(GPIO.BCM)
 
-class Switch(Button):
-    """
-    A class representing a switch that inherits from the Button class.
+
+class Switch:
+    """A class representing a switch.
 
     The Switch class triggers an action immediately after the button is pressed
     for a specified duration (`MIN_PRESS_DURATION`).
@@ -27,7 +28,7 @@ class Switch(Button):
         self,
         gpio: int,
         log: Log,
-        pull_up_down: str = "UP",
+        pull_up_down: Literal["UP", "DOWN"] = "UP",
         callback: Callable | None = None,
         name: str = "",
         invert_logic: bool = True,
@@ -65,7 +66,13 @@ class Switch(Button):
         """
         if callback is None:
             callback = self._debug_callback
-        super().__init__(gpio, callback, log, pull_up_down)
+
+        self.gpio: int
+
+        t = threading.Thread(target=self._run, args=(gpio, callback, log, pull_up_down))
+        t.daemon = True
+        t.start()
+
         self._name = name
         self.state = False if name != "OFF" else True
         self.press_duration = press_duration
@@ -80,34 +87,72 @@ class Switch(Button):
         )
         self._polling_thread.start()
 
-    @property
-    def gpio(self) -> int:
-        """Alias for button."""
-        return self.button
+    def _run(
+        self,
+        gpio: int,
+        callback: Callable,
+        log: Log,
+        pull_up_down: str | int,
+    ) -> None:
+        """Define the run method."""
+        self.gpio = gpio
+        self.callback = callback
+        self.pull_up_down = pull_up_down
+        self.log = log
 
-    def button_event(self, button: int) -> None:
+        if self.gpio <= 0:
+            return
+        GPIO.setwarnings(False)
+
+        if pull_up_down in ("DOWN", "down", 0):
+            resistor = GPIO.PUD_DOWN
+            edge = GPIO.RISING
+            sEdge = "Rising"
+        elif pull_up_down in ("UP", "up", 1):
+            resistor = GPIO.PUD_UP
+            edge = GPIO.FALLING
+            sEdge = "Falling"
+        else:
+            log.message(f"{pull_up_down = } is invalid.", log.ERROR)
+
+        try:
+            msg = f"Creating button object for GPIO {self.gpio} {sEdge = }"
+            log.message(msg, log.DEBUG)
+            # Enable the internal pull-up resistor
+            GPIO.setup(self.gpio, GPIO.IN, pull_up_down=resistor)
+
+            # Add event detection to the GPIO inputs
+            GPIO.add_event_detect(self.gpio, edge, callback=self.event, bouncetime=200)
+        except Exception as e:
+            log.message(f"Button GPIO {self.gpio} initialise error: {e}", log.ERROR)
+            sys.exit(1)
+
+    @property
+    def button(self) -> int:
+        """Alias for GPIO."""
+        return self.gpio
+
+    def event(self, gpio: int) -> None:
         """Handle GPIO events for button presses and releases.
 
         Parameters
         ----------
-        channel : int
+        gpio : int
             GPIO pin number where the event occurred.
 
         """
-        state = GPIO.input(button)
+        state = GPIO.input(gpio)
         is_pressed = not state if self.invert_logic else state
 
         if is_pressed:
             self.log.message(
-                f"Button {self._name} pressed on GPIO {button}", self.log.DEBUG
+                f"Switch {self._name} pressed on GPIO {gpio}", self.log.DEBUG
             )
             self.last_press_time = time.time()
             self.action_triggered = False  # Reset the action flag
             return
 
-        self.log.message(
-            f"Button {self._name} released on GPIO {button}", self.log.DEBUG
-        )
+        self.log.message(f"Button {self._name} released on GPIO {gpio}", self.log.DEBUG)
         self.last_press_time = None
 
     def _switch_disco_light(self) -> None:
