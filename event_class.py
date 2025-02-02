@@ -709,7 +709,7 @@ class Event:
         up_down = self.config.pull_up_down if self.config is not None else 1
         log.message(f"event.setTelefunkenInterface {up_down = }", log.DEBUG)
 
-        disco_light = DiscoLight(gpio=self.config.getSwitchGpio("disco_light"))
+        disco_light = DiscoLight(gpio=self.config.disco_light)
 
         off_button = Switch(
             gpio=self.off_switch,
