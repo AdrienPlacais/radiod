@@ -178,6 +178,7 @@ class Event:
     spotify_switch = 17
     unused_switch = 18
     disco_switch = 5
+    disco_light: DiscoLight | None = None
 
     rotary_switch_value = 0
 
@@ -709,42 +710,42 @@ class Event:
         up_down = self.config.pull_up_down if self.config is not None else 1
         log.message(f"event.setTelefunkenInterface {up_down = }", log.DEBUG)
 
-        disco_light = DiscoLight(gpio=self.config.disco_light)
+        self.disco_light = DiscoLight(gpio=self.config.disco_light)
 
         off_button = Switch(
             gpio=self.off_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light,
+            disco_light=self.disco_light,
         )
         fip_button = Switch(
             gpio=self.fip_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light,
+            disco_light=self.disco_light,
         )
         spotify_button = Switch(
             gpio=self.spotify_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light,
+            disco_light=self.disco_light,
         )
         unused_button = Switch(
             gpio=self.unused_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light,
+            disco_light=self.disco_light,
         )
         disco_button = Switch(
             gpio=self.disco_switch,
             callback=self.switch_event,
             pull_up_down=up_down,
             log=log,
-            disco_light=disco_light,
+            disco_light=self.disco_light,
             disco_activator=True,
         )
         return
