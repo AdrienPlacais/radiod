@@ -190,7 +190,7 @@ class Event:
     # Initialisation routine
     def __init__(self, config):
         self.config = config
-        log.init("event_class")
+        log.init("event_class", console_output=True)
         self.getConfiguration()
         self.setInterface()
         self.setupRotarySwitch()
