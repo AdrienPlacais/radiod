@@ -683,18 +683,16 @@ class Event:
 
         log.message(f"Telefunken button event: {event_gpio} is {new_state}", log.DEBUG)
         print(f"Telefunken button event: {event_gpio} is {new_state}")
-        self.event_triggered = True
 
         # If the button is released, do nothing
-        # the disco light will be shutoff by Switch event
+        self.event_triggered = False
         if not new_state:
             return
 
         if event_gpio not in self._telefunken_events_types:
-            self.event_triggered = False
             return
 
-        # Convert Switch to standard event
+        self.event_triggered = True
         self.event_type = self._telefunken_events_types[event_gpio]
 
     def set_telefunken_interface(self) -> None:
