@@ -103,10 +103,6 @@ class Switch(Button):
             )
             self.last_press_time = time.time()
             self.action_triggered = False  # Reset the action flag
-
-            event_button = self.button
-            self.callback(event_button)  # Pass button event to event class
-
             return
 
         self.log.message(
