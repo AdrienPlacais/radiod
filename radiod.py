@@ -24,6 +24,7 @@ import traceback
 import RPi.GPIO as GPIO
 from config_class import Configuration
 from constants import *
+from disco_light import DiscoLight
 from display_class import Display
 from event_class import Event
 from log_class import Log
@@ -411,6 +412,14 @@ def handleEvent(event,display,radio,menu):
         play_number = event.getPlayNumber() 
         log.message("handleEvent Play " + str(play_number),log.DEBUG)
         radio.play(play_number)
+
+    elif event_type == event.DISCO:
+        log.message("Turning disco mode on.", log.DEBUG)
+        disco_light = event.disco_light
+        if disco_light is None:
+            log.message("Disco Light not set!", log.ERROR)
+        else:
+            disco_light.set(1)
 
     elif event_type != event.NO_EVENT:
         handleRadioEvent(event,display,radio,menu)
