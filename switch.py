@@ -68,7 +68,9 @@ class Switch:
             callback = self._debug_callback
 
         self.gpio: int
-
+        self.callback: Callable
+        self.pud_setting: Literal["UP", "up", 1, "DOWN", "down", 0]
+        self.log: Log
         t = threading.Thread(target=self._run, args=(gpio, callback, log, pull_up_down))
         t.daemon = True
         t.start()
@@ -92,37 +94,27 @@ class Switch:
         gpio: int,
         callback: Callable,
         log: Log,
-        pull_up_down: str | int,
+        pud_setting: Literal["UP", "up", 1, "DOWN", "down", 0],
     ) -> None:
         """Define the run method."""
         self.gpio = gpio
         self.callback = callback
-        self.pull_up_down = pull_up_down
+        self.pud_setting = pud_setting
         self.log = log
 
         if self.gpio <= 0:
             return
         GPIO.setwarnings(False)
 
-        if pull_up_down in ("DOWN", "down", 0):
-            resistor = GPIO.PUD_DOWN
-            edge = GPIO.RISING
-            sEdge = "Rising"
-        elif pull_up_down in ("UP", "up", 1):
-            resistor = GPIO.PUD_UP
-            edge = GPIO.FALLING
-            sEdge = "Falling"
-        else:
-            log.message(f"{pull_up_down = } is invalid.", log.ERROR)
+        pull_up_down, edge, event_name = pud_settings(pud_setting)
 
         try:
-            msg = f"Creating button object for GPIO {self.gpio} {sEdge = }"
+            msg = f"Creating Switch object for GPIO {self.gpio} {event_name = }"
             log.message(msg, log.DEBUG)
-            # Enable the internal pull-up resistor
-            GPIO.setup(self.gpio, GPIO.IN, pull_up_down=resistor)
-
-            # Add event detection to the GPIO inputs
-            GPIO.add_event_detect(self.gpio, edge, callback=self.event, bouncetime=200)
+            GPIO.setup(self.gpio, GPIO.IN, pull_up_down=pull_up_down)
+            GPIO.add_event_detect(
+                self.gpio, edge, callback=self.callback_wrapper, bouncetime=200
+            )
         except Exception as e:
             log.message(f"Button GPIO {self.gpio} initialise error: {e}", log.ERROR)
             sys.exit(1)
@@ -132,7 +124,7 @@ class Switch:
         """Alias for GPIO."""
         return self.gpio
 
-    def event(self, gpio: int) -> None:
+    def callback_wrapper(self, gpio: int) -> None:
         """Handle GPIO events for button presses and releases.
 
         Parameters
@@ -202,6 +194,35 @@ class Switch:
     def _debug_callback(self, gpio: int, state: bool) -> None:
         """Print a message when the button is pressed."""
         print(f"[DEBUG] Switch {self._name} on GPIO {gpio} changed state to {state}")
+
+
+def pud_settings(
+    pull_up_down: Literal["UP", "up", 1, "DOWN", "down", 0]
+) -> tuple[int, int, Literal["Rising", "Falling"]]:
+    """Set up pull-up resistor.
+
+    Returns
+    -------
+    resistor : int
+        Code for the default pull-up resistor.
+    edge : int
+        Code for the edge to detect.
+    event_name : Literal["Rising", "Falling"]
+        String corresponding to the value of ``edge``.
+
+    """
+    if pull_up_down in ("DOWN", "down", 0):
+        resistor = GPIO.PUD_DOWN
+        edge = GPIO.RISING
+        event_name = "Rising"
+        return resistor, edge, event_name
+    if pull_up_down in ("UP", "up", 1):
+        resistor = GPIO.PUD_UP
+        edge = GPIO.FALLING
+        event_name = "Falling"
+        return resistor, edge, event_name
+    log.message(f"{pull_up_down = } is invalid.", log.ERROR)
+    raise OSError(f"{pull_up_down = } is invalid.")
 
 
 if __name__ == "__main__":
