@@ -28,11 +28,9 @@ class Switch:
         self,
         gpio: int,
         log: Log,
-        pull_up_down: Literal["UP", "DOWN"] = "UP",
+        detect: Literal["rising", "falling", "both"],
         callback: Callable | None = None,
         name: str = "",
-        invert_logic: bool = True,
-        press_duration: float = 0.1,
     ) -> None:
         """
         Initialize the Switch object.
@@ -43,19 +41,10 @@ class Switch:
             GPIO pin number for the switch.
         log : Log
             Logging object for messages.
-        pull_up_down : str, optional
-            Pull resistor configuration: "UP" or "DOWN".
         callback : Callable, optional
             Function to call when the button action is triggered.
-        stable_time : float, optional
-            Time in seconds for the state to stabilize. Default is 0.05.
         name : str, optional
             Name of the switch for logging purposes.
-        invert_logic : bool, optional
-            If True, inverts the ON/OFF logic. Default is True.
-        press_duration : float, optional
-            Minimum time the button must be pressed to trigger the action in
-            seconds.
 
         """
         if callback is None:
@@ -63,49 +52,38 @@ class Switch:
 
         self.gpio: int
         self.callback: Callable
-        self.pud_setting: Literal["UP", "up", 1, "DOWN", "down", 0]
         self.log: Log
-        t = threading.Thread(target=self._run, args=(gpio, callback, log, pull_up_down))
-        t.daemon = True
-        t.start()
+        thread = threading.Thread(target=self._run, args=(gpio, callback, log, detect))
+        thread.daemon = True
+        thread.start()
 
         self._name = name
-        self.state = False if name != "OFF" else True
-        self.press_duration = press_duration
-        self.last_press_time = None
-        self.action_triggered = False
-        self.invert_logic = invert_logic
-
-        self._polling_thread = threading.Thread(
-            target=self._poll_press_duration, daemon=True
-        )
-        self._polling_thread.start()
 
     def _run(
         self,
         gpio: int,
         callback: Callable,
         log: Log,
-        pud_setting: Literal["UP", "up", 1, "DOWN", "down", 0],
+        detect: Literal["rising", "falling", "both"],
+        bouncetime: int = 5000,
     ) -> None:
-        """Define the run method."""
+        """Define the run method, invoked by ``Thread.run``."""
         self.gpio = gpio
         self.callback = callback
-        self.pud_setting = pud_setting
         self.log = log
 
         if self.gpio <= 0:
             return
         GPIO.setwarnings(False)
 
-        pull_up_down, edge, event_name = pud_settings(pud_setting)
+        pull_up_down, edge = pud_settings(detect)
 
         try:
-            msg = f"Creating Switch object for GPIO {self.gpio} {event_name = }"
+            msg = f"Creating Switch object for GPIO {self.gpio} {detect = }"
             log.message(msg, log.DEBUG)
             GPIO.setup(self.gpio, GPIO.IN, pull_up_down=pull_up_down)
             GPIO.add_event_detect(
-                self.gpio, edge, callback=self.callback_wrapper, bouncetime=200
+                self.gpio, edge, callback=self.callback_wrapper, bouncetime=bouncetime
             )
         except Exception as e:
             log.message(f"Button GPIO {self.gpio} initialise error: {e}", log.ERROR)
@@ -125,59 +103,20 @@ class Switch:
             GPIO pin number where the event occurred.
 
         """
-        state = GPIO.input(gpio)
-        is_pressed = not state if self.invert_logic else state
-
-        if is_pressed:
-            self.log.message(
-                f"Switch {self._name} pressed on GPIO {gpio}", self.log.DEBUG
-            )
-            self.last_press_time = time.time()
-            self.action_triggered = False  # Reset the action flag
-            return
+        self.log.message(
+            f"Event detected {self._name} pressed on GPIO {gpio}", self.log.DEBUG
+        )
+        # self.action_triggered = False  # Reset the action flag
+        # return
 
         self.log.message(f"Button {self._name} released on GPIO {gpio}", self.log.DEBUG)
-        self.last_press_time = None
-
-    def _poll_press_duration(self) -> None:
-        """
-        Poll the press duration and trigger the action if the button is held
-        for the required time.
-        """
-        while True:
-            if self.last_press_time and not self.action_triggered:
-                elapsed_time = time.time() - self.last_press_time
-                if elapsed_time >= self.press_duration:
-                    self.action_triggered = (
-                        True  # Ensure the action is triggered only once
-                    )
-                    self.log.message(
-                        f"Button {self._name} held for {elapsed_time:.2f} seconds, triggering action.",
-                        self.log.INFO,
-                    )
-                    self.callback(self.gpio, True)  # Call the callback
-            time.sleep(0.05)  # Polling interval
-
-    def pressed(self) -> bool:
-        """Check if the button is currently pressed.
-
-        Returns
-        -------
-        bool
-            True if the button is pressed, False otherwise.
-
-        """
-        state = GPIO.input(self.gpio)
-        return not state if self.invert_logic else state
 
     def _debug_callback(self, gpio: int, state: bool) -> None:
         """Print a message when the button is pressed."""
         print(f"[DEBUG] Switch {self._name} on GPIO {gpio} changed state to {state}")
 
 
-def pud_settings(
-    pull_up_down: Literal["UP", "up", 1, "DOWN", "down", 0]
-) -> tuple[int, int, Literal["Rising", "Falling"]]:
+def pud_settings(detect: Literal["rising", "falling", "both"]) -> tuple[int, int]:
     """Set up pull-up resistor.
 
     Returns
@@ -186,22 +125,17 @@ def pud_settings(
         Code for the default pull-up resistor.
     edge : int
         Code for the edge to detect.
-    event_name : Literal["Rising", "Falling"]
-        String corresponding to the value of ``edge``.
 
     """
-    if pull_up_down in ("DOWN", "down", 0):
-        resistor = GPIO.PUD_DOWN
-        edge = GPIO.RISING
-        event_name = "Rising"
-        return resistor, edge, event_name
-    if pull_up_down in ("UP", "up", 1):
-        resistor = GPIO.PUD_UP
-        edge = GPIO.FALLING
-        event_name = "Falling"
-        return resistor, edge, event_name
-    log.message(f"{pull_up_down = } is invalid.", log.ERROR)
-    raise OSError(f"{pull_up_down = } is invalid.")
+    resistor = GPIO.PUD_UP
+    if detect == "rising":
+        return resistor, GPIO.RISING
+    if detect == "falling":
+        return resistor, GPIO.FALLING
+    if detect == "both":
+        return resistor, GPIO.BOTH
+    log.message(f"{detect = } not allowed.", level=log.ERROR)
+    raise OSError(f"{detect = } not allowed.")
 
 
 if __name__ == "__main__":
@@ -232,16 +166,17 @@ if __name__ == "__main__":
 
     disco_light = DiscoLight(config.getSwitchGpio("disco_light"))
 
-    for gpio, name in zip(
+    for gpio, name, detect in zip(
         (off_gpio, fip_gpio, spotify_gpio, unused_gpio, disco_gpio),
         ("OFF", "FIP", "SPOTIFY", "UNUSED", "DISCO"),
+        ("rising", "rising", "rising", "rising", "both"),
         strict=True,
     ):
         _ = Switch(
             gpio=gpio,
             log=log,
+            detect=detect,
             callback=None,
-            pull_up_down=config.pull_up_down,
             name=name,
         )
 
