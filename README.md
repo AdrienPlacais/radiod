@@ -13,8 +13,8 @@ This software uses the python3-mpd library. See https://packages.debian.org/sid/
 ## To-do
 - [ ] Software vol matching radio's
 - [ ] Spotify
-- [ ] No sound at start up
-- [ ] Set-up disco light
+- [x] No sound at start up
+- [x] Set-up disco light
 
 ## Optional
 - [ ] Voice to announce which FIP is played
