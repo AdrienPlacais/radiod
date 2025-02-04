@@ -14,10 +14,11 @@ This software uses the python3-mpd library. See https://packages.debian.org/sid/
 The software is an adaptation of Bob Rathbone's work for a Telefunken vintage radio.
 Radio can be controlled thanks to the buttons:
 - First: OFF
-- 2nd: FIP radio
+- 2nd: FIP webradios
 - 3rd: Spotify
 - 4th: unused
 - Last: backlight
+
 Volume is controlled thanks to left rotary encore (push to mute).
 Navigation between FIP webradios/within Spotify playlists is performed thanks to right rotary encoder.
 ![picture_radio](images/pic_radio.jpg) 
