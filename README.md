@@ -30,6 +30,6 @@ Navigation between FIP webradios/within Spotify playlists is performed thanks to
 - [x] Set-up backlight
 
 ## Optional
-- [ ] During navigation between FIP webradios, voice to announce which webradio is selected
+- [ ] During navigation between FIP webradios, voice to announce which webradio is selected (use [fip-radiod](https://github.com/AdrienPlacais/fip_radiod)).
 - [ ] Hold mute to tell the name of current song (needs `espeak`)
 - [ ] Radios on the front plate match FIP webradios
